@@ -1,0 +1,135 @@
+.notification-center {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* prevent outer scrollbar */
+}
+.notification-center-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+
+
+.notification-center-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* prevent double scrolling */
+}
+.sidebar-container {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e7eb;
+  background: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto; /* only this should scroll */
+}
+
+.overview-section {
+  max-width: 800px;
+}
+
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+
+.activity-content p:first-child {
+  font-weight: 500;
+}
+
+.activity-content p:last-child {
+  color: #6b7280;
+}
+
+
+.section-content {
+  max-width: 600px;
+  background: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notification-center-body {
+    flex-direction: column;
+  }
+
+  .sidebar-container {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .notification-center-header {
+    padding: 1rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+
+}
+
+@media (max-width: 480px) {
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mark-read-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .activity-item {
+    padding: 0.75rem;
+  }
+
+  .activity-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+
+}
