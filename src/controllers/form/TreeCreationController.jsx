@@ -23,8 +23,6 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
     try {
       let result;
       if (isEdit && treeToEdit) {
-        // Remove edit tree functionality by not allowing updateTree call
-        // Instead, just close modal and notify user that editing is now done via settings page
         addToast("Editing trees via creation modal is disabled. Please use the Settings page to edit your tree.", "info");
         closeModal("treeModal");
         return;

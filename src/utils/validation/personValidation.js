@@ -1,5 +1,5 @@
 
-export function validatePersonData(personData, context) {
+export function validatePersonData(personData, _context) {
   if (!personData.fullName || typeof personData.fullName !== 'string' || personData.fullName.trim().length === 0) {
     throw new Error("Full name is required and must be a non-empty string.");
   }
@@ -14,10 +14,6 @@ export function validatePersonData(personData, context) {
 
   if (personData.phoneNumber && !/^\+?[\d\s\-\(\)]+$/.test(personData.phoneNumber)) {
     throw new Error("Phone number must be a valid format.");
-  }
-
-  if (context === 'root' && !personData.familyName) {
-    throw new Error("Family name is required for root person.");
   }
 }
 

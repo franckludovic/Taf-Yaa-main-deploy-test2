@@ -74,7 +74,7 @@ export function buildTree(nodesMap, marriages, NODE_WIDTH, NODE_HEIGHT, expected
   for (const id of nodesMap.keys()) {
     treeNodes.set(id, createTreeNode(id, null, NODE_WIDTH, NODE_HEIGHT));
   }
-  console.log("DBG:buildTree -> created treeNodes keys:", Array.from(treeNodes.keys()));
+
 
   // Link children to parents
   for (const marriage of marriages) {
@@ -98,7 +98,6 @@ export function buildTree(nodesMap, marriages, NODE_WIDTH, NODE_HEIGHT, expected
     
     const primaryParent = parents[0];
     if (!primaryParent) {
-      console.warn("DBG:buildTree -> skipping marriage without primary parent or node missing:", marriage.id);
       continue;
     }
 
@@ -114,8 +113,6 @@ export function buildTree(nodesMap, marriages, NODE_WIDTH, NODE_HEIGHT, expected
           if (spouseNode) spouseNode.isSpouse = true;
         }
         primaryParent.children.push(childNode);
-      } else {
-        console.log("DBG:buildTree -> child node missing for childId:", childId, "in marriage:", marriage.id);
       }
     }
   }
@@ -123,7 +120,7 @@ export function buildTree(nodesMap, marriages, NODE_WIDTH, NODE_HEIGHT, expected
   // : Use expectedRootId if provided, otherwise fall back to old logic
   if (expectedRootId && treeNodes.has(expectedRootId)) {
     root = treeNodes.get(expectedRootId);
-    console.log("DBG:buildTree -> using expected root:", root.id);
+    // console.log("DBG:buildTree -> using expected root:", root.id);
   } else {
     // Fallback to old logic
     const allChildrenIds = new Set(Array.from(treeNodes.values()).flatMap(n => n.children.map(c => c.id)));
@@ -136,11 +133,6 @@ export function buildTree(nodesMap, marriages, NODE_WIDTH, NODE_HEIGHT, expected
 
     if (!root && treeNodes.size > 0) {
       root = treeNodes.values().next().value;
-      console.log("DBG:buildTree -> fallback root selected:", root.id);
-    } else if (root) {
-      console.log("DBG:buildTree -> root selected:", root.id);
-    } else {
-      console.log("DBG:buildTree -> no nodes in treeNodes");
     }
   }
 

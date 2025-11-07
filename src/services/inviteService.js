@@ -41,7 +41,7 @@ export async function createInviteService({
   usesAllowed = 1,
   expiresAt,
   notes,
-  appBaseUrl = 'http://localhost:8888',
+  appBaseUrl = 'https://tafyaa.netlify.app',
 }) {
   const code = generateInviteCode();
   const joinUrl = `${appBaseUrl}/join?code=${encodeURIComponent(code)}`;

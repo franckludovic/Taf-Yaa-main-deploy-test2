@@ -6,13 +6,14 @@ import dataService from "../../services/dataService";
  * Add a generic event (birth, death, marriage, custom, etc.)
  */
 export async function addEvent(treeId, personIds, type, options = {}) {
-  // Validation: Check birth events and date constraints
+  const { skipDuplicateCheck = false, ...otherOptions } = options; // <-- DESTRUCTURE THE NEW OPTION
+
   for (const personId of personIds) {
     const person = await dataService.getPerson(personId);
     if (!person) throw new Error(`Person ${personId} not found`);
 
-    // Check if adding a birth event and person already has one
-    if (type === 'birth') {
+    // MODIFIED BLOCK: Only run this check if skipDuplicateCheck is false
+    if (type === 'birth' && !skipDuplicateCheck) {
       const existingBirthEvents = await dataService.getEventsByPersonId(personId, treeId);
       const birthEvents = existingBirthEvents.filter(e => e.type === 'birth');
       if (birthEvents.length > 0) {
@@ -20,9 +21,8 @@ export async function addEvent(treeId, personIds, type, options = {}) {
       }
     }
 
-    // Check if event date is before person's birth date
-    if (options.date && person.dob) {
-      const eventDate = new Date(options.date);
+    if (otherOptions.date && person.dob) {
+      const eventDate = new Date(otherOptions.date);
       const birthDate = new Date(person.dob);
       if (eventDate < birthDate) {
         throw new Error(`Event date cannot be before the person's birth date (${person.dob})`);
@@ -34,7 +34,7 @@ export async function addEvent(treeId, personIds, type, options = {}) {
     treeId,
     personIds,
     type,
-    ...options,
+    ...otherOptions, // <-- USE THE REST OF THE OPTIONS HERE
   });
 
   // Persist the event using dataService

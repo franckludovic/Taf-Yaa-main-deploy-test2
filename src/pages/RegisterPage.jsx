@@ -64,7 +64,7 @@ export default function RegisterPage() {
           <div className="mb-2">
             <h2 className="text-3xl font-bold text-gray-900 mb-1">Create account</h2>
             <p className="text-gray-600 text-md">
-              Retrace your legacy with Taf-yaa!
+              Retrace your legacy with Taf'Yaa!
             </p>
           </div>
           <form onSubmit={handleSubmit} className="w-full mt-4">

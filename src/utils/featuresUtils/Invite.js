@@ -13,7 +13,6 @@ let admin = null;
 let firestore = null;
 const USE_FIREBASE = (() => {
   try {
-    // If env has FIREBASE_SERVICE_ACCOUNT JSON or GOOGLE_APPLICATION_CREDENTIALS set, attempt init
     if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       admin = require('firebase-admin');
       const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT; // JSON string
@@ -51,7 +50,7 @@ app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 4000;
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:5173'; // used for creating invite links
+const APP_BASE_URL = process.env.APP_BASE_URL || 'https://tafyaa.netlify.app'; // used for creating invite links
 const INVITE_COLLECTION = 'tafia_invites';
 const MEMBERS_COLLECTION = 'tafia_members';
 

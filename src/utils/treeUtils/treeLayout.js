@@ -257,7 +257,6 @@ export function findHighestAncestor(startPersonId, allPeople, allMarriages) {
     }
   }
 
-  console.log(`findHighestAncestor: starting from ${startPersonId}, found true root: ${highestAncestorId}`);
   return highestAncestorId;
 }
 

@@ -13,11 +13,12 @@ import {
   serverTimestamp,
   deleteField
 } from 'firebase/firestore';
-import { db } from '../../config/firebase.js';
+import { db, auth } from '../../config/firebase.js';
 import { generateId } from '../../utils/personUtils/idGenerator.js';
 import { marriageServiceFirebase } from './marriageServiceFirebase.js';
 import { eventServiceFirebase } from './eventServiceFirebase.js';
 import { storyServiceFirebase } from './storyServiceFirebase.js';
+import { treeServiceFirebase } from './treeServiceFirebase.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -27,27 +28,72 @@ const generateDeletionBatchId = () => generateId("deletion");
 
 async function addPerson(person) {
   try {
-    // Check if person with same ID already exists
-    const existingPerson = await getPerson(person.id);
-    if (existingPerson) {
-      console.warn("personServiceFirebase.addPerson -> duplicate person id detected:", person.id);
-      person = { ...person, id: generateId("person") };
+    // Ensure unique ID
+    if (!person?.id) {
+      person.id = generateId("person");
     }
 
-    const personRef = doc(db, 'people', person.id);
+    // Firestore rule requires treeId for permission validation
+    if (!person.treeId) {
+      throw new Error("Missing treeId in person data (required for Firestore permissions)");
+    }
+
+    // Debug logging for permissions
+    const currentUser = auth.currentUser;
+    console.log("addPerson -> Current user:", currentUser?.uid);
+    console.log("addPerson -> Person treeId:", person.treeId);
+    console.log("addPerson -> Person data:", person);
+
+    // Check if user is authenticated
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check tree membership
+    const tree = await treeServiceFirebase.getTree(person.treeId);
+    console.log("addPerson -> Tree data:", tree);
+
+    if (!tree) {
+      throw new Error(`Tree ${person.treeId} not found`);
+    }
+
+    if (!tree.memberUIDs?.includes(currentUser.uid)) {
+      throw new Error(`User ${currentUser.uid} is not a member of tree ${person.treeId}`);
+    }
+
+    // Check user role in tree
+    const memberData = tree.members?.find(m => m.userId === currentUser.uid);
+    console.log("addPerson -> Member data:", memberData);
+
+    if (!memberData) {
+      throw new Error(`User ${currentUser.uid} member data not found in tree ${person.treeId}`);
+    }
+
+    const allowedRoles = ['admin', 'moderator', 'editor'];
+    if (!allowedRoles.includes(memberData.role)) {
+      throw new Error(`User ${currentUser.uid} has role '${memberData.role}' which is not allowed to create people in tree ${person.treeId}`);
+    }
+
+    const personRef = doc(db, "people", person.id);
     const personData = {
       ...person,
-      active: true, // Add active field for better querying
+      active: true,
       createdAt: getCurrentTimestamp(),
-      updatedAt: getCurrentTimestamp()
+      updatedAt: getCurrentTimestamp(),
     };
 
+    console.log("addPerson -> Attempting to create person with data:", personData);
     await setDoc(personRef, personData);
-    return person;
+    console.log("addPerson -> Person created successfully");
+
+    return { id: person.id, ...personData };
   } catch (error) {
+    console.error("addPerson -> Firestore error:", error);
+    console.error("addPerson -> Error details:", error.message);
     throw new Error(`Failed to add person: ${error.message}`);
   }
 }
+
 
 async function getPerson(id) {
   try {
@@ -558,6 +604,7 @@ async function findPeopleByName(query) {
 
 async function getPeopleByTreeId(treeId) {
   try {
+    console.log('getPeopleByTreeId called with treeId:', treeId, 'User:', auth.currentUser?.uid);
     if (!treeId) {
       return [];
     }

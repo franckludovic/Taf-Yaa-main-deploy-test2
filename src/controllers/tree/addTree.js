@@ -10,7 +10,7 @@ import { generateId } from "../../utils/personUtils/idGenerator";
 
 
 export async function addTree(formData, options = {}) {
-  const { createdBy = "system", onError } = options;
+  const { createdBy, onError } = options;
 
   try {
     //  1. INITIAL VALIDATION 
@@ -21,14 +21,13 @@ export async function addTree(formData, options = {}) {
       fullName: formData.rootPersonName,
       gender: formData.rootPersonGender,
       email: formData.rootPersonEmail || null,
-      // Add other fields as needed
     };
-    validatePersonData(rootPersonData, 'root');
+    validatePersonData(rootPersonData);
 
-    //  2. CREATE TREE OBJECT 
+   
     const treeId = generateId("tree");
 
-    //  3. FILE UPLOADS 
+
     let uploadedFamilyPhotoUrl = null;
     if (formData.familyPhoto) {
       try {
@@ -163,10 +162,10 @@ export async function addTree(formData, options = {}) {
 
     //  5. CREATE ASSOCIATED RECORDS 
     if (rootPerson.dob) {
-      await addBirth(treeId, rootPersonId, { date: rootPerson.dob, title: "Birth" });
+      await addBirth(treeId, rootPersonId, { date: rootPerson.dob, title: "Birth",  skipDuplicateCheck: true });
     }
     if (rootPerson.dod) {
-      await addDeath(treeId, rootPersonId, { date: rootPerson.dod, title: "Death" });
+      await addDeath(treeId, rootPersonId, { date: rootPerson.dod, title: "Death", skipDuplicateCheck: true });
     }
 
     // Audio story is already created above, so we don't need to create another one

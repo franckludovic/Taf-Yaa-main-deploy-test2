@@ -19,8 +19,8 @@ export async function handleSignUp(formData, navigate, setError, setLoading) {
       language: formData.language,
     });
 
-    // Navigate on success
-    navigate('/my-trees');
+    // Navigate to email verification page instead of directly to my-trees
+    navigate('/verify-email');
 
   } catch (err) {
     setError(err.message);

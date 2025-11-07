@@ -33,6 +33,19 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  // Redirect unverified users to email verification page
+  // TEMPORARILY DISABLED FOR DEV TESTING - RE-ENABLE AFTER TESTING
+  /*
+  useEffect(() => {
+    if (!loading && currentUser && !currentUser.emailVerified) {
+      // Only redirect if not already on verification page
+      if (window.location.pathname !== '/verify-email') {
+        window.location.href = '/verify-email';
+      }
+    }
+  }, [currentUser, loading]);
+  */
+
   const value = {
     currentUser,
     userData,
@@ -40,7 +53,9 @@ export const AuthProvider = ({ children }) => {
     register: authService.register,
     login: authService.login,
     loginWithGoogle: authService.loginWithGoogle,
-    logout: authService.logout
+    logout: authService.logout,
+    resendEmailVerification: authService.resendEmailVerification,
+    isCurrentUserEmailVerified: authService.isCurrentUserEmailVerified
   };
 
   return (

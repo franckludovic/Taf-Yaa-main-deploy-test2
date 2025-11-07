@@ -13,11 +13,7 @@ export default function GlobalModals() {
         const isOpen = modals[key];
         const data = modalData[key] || {};
 
-        console.log(`GlobalModals: key=${key}, isOpen=${isOpen}, data=`, data);
-
         if (!isOpen) return null;
-
-        console.log(`Rendering modal: ${key}`);
 
         return (
           <ModalComponent

@@ -238,7 +238,7 @@ function createEdges(marriages, nodesMap) {
             targetHandle: "target-parent"
           }
         )
-        console.log(e)
+
         if (e) edges.push(e);
         for (const childId of (w.childrenIds || [])) {
           const ec = createEdgeWithGuard(createParentChildEdge, nodesMap, w.wifeId, childId);
@@ -273,7 +273,7 @@ function createEdges(marriages, nodesMap) {
 /*  Main  */
 export function layoutHorizontal(nodesMap, marriages, initialEdges, rootId) {
 
-  console.log("DATA RECEIVED BY LAYOUT:", JSON.parse(JSON.stringify(marriages)));
+
 
 
   if (!nodesMap?.size || !marriages?.length) return { nodes: Array.from(nodesMap.values()), edges: initialEdges };

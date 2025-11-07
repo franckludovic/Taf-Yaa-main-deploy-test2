@@ -1,5 +1,6 @@
 
 import { useEffect, useState, useCallback } from "react";
+import { auth } from "../config/firebase";
 
 import  dataService  from "../services/dataService";
 
@@ -17,6 +18,10 @@ export function useFamilyData(treeId) {
 
   const reload = useCallback(async () => {
     setLoading(true);
+
+  console.log("DEBUG: Checking permissions for treeId:", treeId);
+  console.log("DEBUG: Checking permissions for userId:", auth.currentUser?.uid);
+
     try {
       if (!treeId) {
         setTree(null);
@@ -47,18 +52,7 @@ export function useFamilyData(treeId) {
       // Filter out only cascade deleted persons
       p = p.filter(person => !(person.isDeleted && person.deletionMode === "cascade"));
 
-      // Debug log for people including placeholders
-      console.log("DBG:useFamilyData.reload -> people loaded (filtered cascade deleted):", p.map(person => ({
-        id: person.id,
-        name: person.name,
-        isPlaceholder: person.isPlaceholder,
-        isDeleted: person.isDeleted,
-        deletionMode: person.deletionMode,
-        pendingDeletion: person.pendingDeletion,
-      })));
-
       p = p.map(person => {
-        console.log(`Person ${person.name} (id: ${person.id}) linkedUserId:`, person.linkedUserId);
         return {
           ...person,
           role: (!person.isDeceased && person.linkedUserId) ? (t.members?.find(m => m.userId === person.linkedUserId)?.role || null) : null

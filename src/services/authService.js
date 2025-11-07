@@ -5,7 +5,8 @@ import {
   onAuthStateChanged,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendEmailVerification
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -19,6 +20,9 @@ export const authService = {
 
       // Update profile
       await updateProfile(user, { displayName });
+
+      // Send email verification
+      await sendEmailVerification(user);
 
       // Create user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
@@ -41,6 +45,7 @@ export const authService = {
         isActive: true,
         isDeleted: false,
         deletedAt: null,
+        emailVerified: false, // Track verification status
       });
 
       return user;
@@ -80,7 +85,19 @@ export const authService = {
 
     try {
       const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      return userDoc.exists() ? userDoc.data() : null;
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        // Update email verification status in Firestore if it has changed
+        if (auth.currentUser.emailVerified !== userData.emailVerified) {
+          await setDoc(doc(db, 'users', auth.currentUser.uid), {
+            emailVerified: auth.currentUser.emailVerified,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          userData.emailVerified = auth.currentUser.emailVerified;
+        }
+        return userData;
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching user data:', error);
       return null;
@@ -144,5 +161,24 @@ export const authService = {
       console.error('Error fetching user by ID:', error);
       return null;
     }
+  },
+
+  // Resend email verification
+  async resendEmailVerification() {
+    try {
+      if (!auth.currentUser) {
+        throw new Error('No user is currently signed in');
+      }
+
+      await sendEmailVerification(auth.currentUser);
+      return { success: true, message: 'Verification email sent successfully' };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  },
+
+  // Check if current user is email verified
+  isCurrentUserEmailVerified() {
+    return auth.currentUser?.emailVerified || false;
   }
 };

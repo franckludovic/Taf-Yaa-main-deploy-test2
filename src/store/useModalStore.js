@@ -97,7 +97,6 @@ const useModalStore = create((set) => ({
 
   // Open a specific modal with optional data
   openModal: (modalName, data = {}) => {
-    console.log('useModalStore openModal called:', modalName, data);
     set((state) => ({
       modals: { ...state.modals, [modalName]: true },
       modalData: { ...state.modalData, [modalName]: { ...state.modalData[modalName], ...data } }

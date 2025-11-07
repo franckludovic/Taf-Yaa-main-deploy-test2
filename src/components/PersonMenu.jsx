@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { ListCollapse, CircleUserRound, MapPinHouse, GitCompareArrows, UserRoundPlus, UserRoundPen, Heart, Baby, Users, User, ChevronRight, Undo2 } from 'lucide-react';
 import '../styles/PersonMenu.css';
 
-function PersonMenu({ handleToggleCollapse, handleOpenProfile, handleTraceLineage, handleSetAsRoot, onAddSpouse, onAddChild, onAddParent, onEditPerson, onDeleteComplete }) {
+function PersonMenu({ treeId, treeData, handleToggleCollapse, handleOpenProfile, handleTraceLineage, handleSetAsRoot, onAddSpouse, onAddChild, onAddParent, onEditPerson, onDeleteComplete }) {
   const { isOpen, targetNodeId, position, actions, targetPerson } = usePersonMenuStore();
   const menuRef = useRef(null);
   const [showSubmenu, setShowSubmenu] = useState(false);
@@ -70,10 +70,10 @@ function PersonMenu({ handleToggleCollapse, handleOpenProfile, handleTraceLineag
     }
 
     // Get person data and tree membership info
-    Promise.all([
-      dataService.getPerson(targetNodeId),
-      dataService.getTree(targetPerson?.treeId || targetNodeId.split('-')[0]) // Assuming treeId is part of personId or passed in targetPerson
-    ])
+    const personPromise = dataService.getPerson(targetNodeId);
+    const treePromise = treeData ? Promise.resolve(treeData) : dataService.getTree(treeId);
+
+    Promise.all([personPromise, treePromise])
       .then(([personModel, treeData]) => {
         if (cancelled) return;
 

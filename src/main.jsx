@@ -26,6 +26,8 @@ import JoinPage from "./pages/JoinPage.jsx";
 import JoinRequestPage from "./pages/JoinRequestPage.jsx";
 import Custom404Page from "./components/Custom404Page.jsx";
 import TreeSettingsPage from "./pages/TreeSettingsPage.jsx";
+import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
+import Loading from "./components/Loading.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 
 // Component to handle landing page routing
@@ -33,7 +35,7 @@ const LandingRouteWrapper = ({ children }) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loading variant="spinner" size="lg" message="Loading your account..." fullScreen />;
   }
 
   if (currentUser) {
@@ -193,6 +195,11 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <RegisterPage />,
+    errorElement: <Custom404Page />,
+  },
+  {
+    path: "/verify-email",
+    element: <EmailVerificationPage />,
     errorElement: <Custom404Page />,
   },
   {

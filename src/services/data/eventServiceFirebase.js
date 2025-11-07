@@ -21,13 +21,6 @@ const getCurrentTimestamp = () => serverTimestamp();
 
 async function addEvent(event) {
   try {
-    // Check if event with same ID already exists
-    const existingEvent = await getEvent(event.id);
-    if (existingEvent) {
-      console.warn("eventServiceFirebase.addEvent -> duplicate event id detected:", event.id);
-      event = { ...event, id: generateId("event") };
-    }
-
     const eventRef = doc(db, 'events', event.id);
     const eventData = {
       ...event,

@@ -5,6 +5,8 @@ import TreeCanvasWrapper from "../components/tree/TreeCanvas";
 import dataService from "../services/dataService";
 import { TreeProvider } from "../context/TreeContext.jsx";
 import useModalStore from "../store/useModalStore";
+import Loading from "../components/Loading.jsx";
+import { getLottieData } from "../assets/lotties/lottieMappings.js";
 
 export default function FamilyTreePage() {
   const { treeId } = useParams();
@@ -13,6 +15,14 @@ export default function FamilyTreePage() {
   const navigate = useNavigate();
   const [notFound, setNotFound] = useState(false);
   const { closeAllModals } = useModalStore();
+  const [lottieData, setLottieData] = useState(null);
+
+  // Preload Lottie data for instant loading
+  useEffect(() => {
+    getLottieData('treeDataLoader').then(data => {
+      if (data) setLottieData(data);
+    });
+  }, []);
 
   // Close all modals when entering the tree canvas
   useEffect(() => {
@@ -56,7 +66,7 @@ export default function FamilyTreePage() {
     }
   }, [loading, tree, navigate]); 
 if (loading) {
-  return <div>Loading tree...</div>;
+  return <Loading variant="lottie" animationData={lottieData} size="lg" message="Loading your family tree..." fullScreen />;
 }
 
 if (notFound || !tree) {
@@ -66,7 +76,7 @@ if (notFound || !tree) {
 return (
   <TreeProvider treeId={treeId}>
     <div style={{ height: "calc(100vh - var(--topbar-height))", width: "100%" }}>
-      <TreeCanvasWrapper treeId={tree.id} />
+      <TreeCanvasWrapper treeId={tree.id} lottieData={lottieData} />
     </div>
   </TreeProvider>
 );

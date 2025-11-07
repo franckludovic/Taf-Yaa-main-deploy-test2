@@ -37,14 +37,8 @@ const calculateContributors = (createdBy, attachments = []) => {
 
 async function addStory(story) {
   try {
-    // Check if story with same ID already exists
-    const existingStory = await getStory(story.id);
-    if (existingStory) {
-      console.warn("storyServiceFirebase.addStory -> duplicate story id detected:", story.id);
-      story = { ...story, id: generateId("story") };
-    }
 
-    const storyRef = doc(db, 'stories', story.id);
+    const storyRef = doc(db, 'stories', story.id || generateId("story"));
     const storyData = {
       ...story,
       active: true, // Add active field for better querying

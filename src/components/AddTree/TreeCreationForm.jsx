@@ -14,8 +14,9 @@ import Column from '../../layout/containers/Column';
 import ToggleSwitch from '../ToggleSwitch';
 import countryList from "react-select-country-list";
 import Grid from '../../layout/containers/Grid';
+import Loading from '../Loading';
 
-const TreeCreationForm = ({ onSubmit, onCancel, interfaceLanguage = 'en', isEdit = false, treeToEdit = null }) => {
+const TreeCreationForm = ({ onSubmit, onCancel, interfaceLanguage = 'en', isEdit = false, treeToEdit = null, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
     // Tree Information
     familyName: '',
@@ -158,9 +159,17 @@ const TreeCreationForm = ({ onSubmit, onCancel, interfaceLanguage = 'en', isEdit
   const countryOptions = useMemo(() => countryList().getData(), []);
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <div style={{ position: 'relative' }}>
+      {isSubmitting && (
+        <Loading
+          variant="overlay"
+          lottieName="treeCreationLoader"
+          message="Creating your family tree..."
+        />
+      )}
+      <form onSubmit={handleSubmit} className="form">
 
-      {/* Section 1: Tree Information */}
+        {/* Section 1: Tree Information */}
       <div className="section-card">
         <div className="section-header">
           <Card fitContent margin='0.5rem' className="section-icon">
@@ -438,14 +447,15 @@ const TreeCreationForm = ({ onSubmit, onCancel, interfaceLanguage = 'en', isEdit
 
 
       <Row className="button-group">
-        <Button fullWidth variant='danger' onClick={onCancel}>
+        <Button fullWidth variant='danger' onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button fullWidth type="submit">
+        <Button fullWidth type="submit" disabled={isSubmitting}>
           {isEdit ? 'Update Tree' : 'Create Tree'}
         </Button>
       </Row>
     </form>
+    </div>
   );
 };
 

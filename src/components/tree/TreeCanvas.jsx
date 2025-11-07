@@ -10,6 +10,7 @@ import "reactflow/dist/style.css";
 import "../../styles/TreeCanvas.css";
 
 import { useFamilyData } from "../../hooks/useFamilyData";
+import Loading from "../Loading.jsx";
 import {
   calculateLayout,
   traceLineage,
@@ -36,6 +37,7 @@ import UndoCountdown from "../UndoCountdown";
 import usePersonMenuStore from "../../store/usePersonMenuStore";
 import useSidebarStore from "../../store/useSidebarStore";
 import useModalStore from "../../store/useModalStore";
+import dataService from "../../services/dataService";
 
 // -- React Flow `config --
 const nodeTypes = {
@@ -86,10 +88,12 @@ const CustomMarkers = () => (
 );
 
 
-function TreeCanvasComponent({ treeId }) {
+function TreeCanvasComponent({ treeId, lottieData }) {
   // - Hooks -
   const { people: allPeople, marriages: allMarriages, loading, reload } =
     useFamilyData(treeId);
+
+  const [treeData, setTreeData] = useState(null);
 
   const { fitView } = useReactFlow();
   const { closeMenu } = usePersonMenuStore((state) => state.actions);
@@ -112,6 +116,13 @@ function TreeCanvasComponent({ treeId }) {
       window.removeEventListener('familyDataChanged', handleDataUpdate);
     };
   }, [reload]);
+
+  // Fetch tree data once for faster menu loading
+  useEffect(() => {
+    if (treeId) {
+      dataService.getTree(treeId).then(setTreeData).catch(console.error);
+    }
+  }, [treeId]);
   const [viewRootId, setViewRootId] = useState(null);
   const [isManualRoot, setIsManualRoot] = useState(false);
 
@@ -244,9 +255,6 @@ const handleResetView = useCallback(() => {
 
   // - Effects -
   useEffect(() => {
-    console.log("DBG:TreeCanvas useEffect allPeople changed, count:", allPeople.length);
-    const placeholderCount = allPeople.filter(p => p.isPlaceholder).length;
-    console.log("DBG:TreeCanvas useEffect placeholder count:", placeholderCount);
     setPeopleWithCollapseState(
       allPeople.map((p) => ({ ...p, isCollapsed: p.isCollapsed ?? false }))
     );
@@ -277,7 +285,7 @@ useEffect(() => {
   const currentRootStillExists = allPeople.some(p => p.id === viewRootId);
   if (!currentRootStillExists && newTrueRoot) {
     setViewRootId(newTrueRoot);
-    setIsManualRoot(false); // back to auto mode
+    setIsManualRoot(false);
     setTimeout(() => fitView({ duration: 800 }), 100);
   }
 }, [allPeople, allMarriages, viewRootId, isManualRoot, fitView]);
@@ -285,13 +293,11 @@ useEffect(() => {
 
 
 
-  if (loading || !viewRootId) return <div>Loading family tree…</div>;
+  if (loading || !viewRootId) return <Loading variant="lottie" animationData={lottieData} size="lg" message="Loading family tree..." portal scale={4} />;
 
 
 
-  // =======================
-  // Render
-  // =======================
+
   return (
     <div
       style={{ height: "100%", width: "100%" }}
@@ -299,6 +305,8 @@ useEffect(() => {
     >
       {/* Context menu for nodes */}
       <PersonMenu
+        treeId={treeId}
+        treeData={treeData}
         handleToggleCollapse={handleToggleCollapse}
         handleOpenProfile={handleOpenProfile}
         handleTraceLineage={handleTraceLineage}

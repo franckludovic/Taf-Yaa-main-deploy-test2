@@ -20,22 +20,27 @@ const getCurrentTimestamp = () => serverTimestamp();
 
 async function addTree(tree) {
   try {
-    // Check if tree with same ID already exists
-    const existingTree = await getTree(tree.id);
-    if (existingTree) {
-      console.warn("treeServiceFirebase.addTree -> duplicate tree id detected:", tree.id);
-      tree = { ...tree, id: generateId("tree") };
+   
+    if (!tree.id) {
+      tree.id = generateId("tree");
     }
 
-    const treeRef = doc(db, 'trees', tree.id || generateId("tree"));
+    const treeRef = doc(db, 'trees', tree.id);
+    const uid = tree.createdBy;
+
     const treeData = {
       ...tree,
-      id: tree.id || generateId("tree"),
-      members: tree.members || [],
+      id: tree.id,
+      members: tree.members || [{
+        userId: uid,
+        role: "admin",
+        joinedAt: new Date().toISOString(),
+      }],
+      memberUIDs: tree.memberUIDs || [uid],
       invitesEnabled: tree.invitesEnabled ?? true,
       mergeOptIn: tree.mergeOptIn ?? false,
       currentRootId: tree.currentRootId || null,
-      active: true, // Add active field for better querying
+      active: true,
       createdAt: getCurrentTimestamp(),
       updatedAt: getCurrentTimestamp()
     };
@@ -129,7 +134,6 @@ async function addMember(treeId, member) {
     const members = tree.members || [];
     const memberUIDs = tree.memberUIDs || [];
     
-    // Check if member already exists
     const existingMemberIndex = members.findIndex(m => m.userId === member.userId);
     if (existingMemberIndex !== -1) {
       throw new Error("Member already exists in this tree");
@@ -144,7 +148,7 @@ async function addMember(treeId, member) {
     members.push(newMember);
     memberUIDs.push(member.userId); 
     
-    await updateTree(treeId, { members });
+    await updateTree(treeId, { members, memberUIDs });
     return newMember;
   } catch (error) {
     throw new Error(`Failed to add member: ${error.message}`);
@@ -370,7 +374,7 @@ async function getUser(userId) {
   }
 }
 
-// Export all the functions in a single service object.
+
 export const treeServiceFirebase = {
   addTree,
   getTree,

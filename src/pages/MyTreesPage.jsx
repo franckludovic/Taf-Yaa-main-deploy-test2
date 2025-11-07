@@ -45,7 +45,7 @@ const MyTreesPage = () => {
   const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const [treeToPurge, setTreeToPurge] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 3; 
+  const pageSize = 6; 
   const [peopleCounts, setPeopleCounts] = useState({});
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -111,6 +111,7 @@ const MyTreesPage = () => {
 
           // Fetch people count for the tree
           try {
+            console.log('Fetching people for tree query1:', tree.id, 'User:', currentUser?.uid, tree);
             const people = await dataService.getPeopleByTreeId(tree.id);
             counts[tree.id] = people.length;
           } catch (error) {
@@ -189,6 +190,7 @@ const MyTreesPage = () => {
 
         // Fetch people count for the new/updated tree
         try {
+           console.log('Fetching people for tree query2:', result.tree.id, 'User:', currentUser?.uid, result.tree);
           const people = await dataService.getPeopleByTreeId(result.tree.id);
           setPeopleCounts(prev => ({
             ...prev,
