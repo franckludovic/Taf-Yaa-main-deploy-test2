@@ -5,6 +5,7 @@ import { addParentToChild } from "../tree/addParent";
 import dataService from "../../services/dataService.js";
 import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js"; 
+import LottieLoader from "../../components/LottieLoader.jsx";
 
 const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,14 +106,52 @@ const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
     }
   };
   
-  //  Render the Form 
-  if (isLoadingForm) {
-    return <div>Loading form...</div>;
-  }
+  // show initial loading loader (unchanged)
+  if (isLoadingForm)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={2} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading Parent's related data...
+        </div>
+      </div>
+    );
 
   return (
     <>
       {error && <div style={{ color: "red", marginBottom: '1rem' }}>{error}</div>}
+       {isSubmitting ? (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255, 255, 255, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10
+        }}>
+          <div style={{ width: 220, maxWidth: '60vw' }}>
+            <LottieLoader name="addPerson" aspectRatio={3} loop autoplay />
+          </div>
+          <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+            Adding Parent's data...
+          </div>
+        </div>
+      ) : null}
       <AddParentForm
         onSubmit={handleSubmit}
         onCancel={onCancel}

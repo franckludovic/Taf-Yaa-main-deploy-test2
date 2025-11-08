@@ -1,8 +1,8 @@
 import { authService } from '../../services/authService';
+import { getErrorMessage } from '../../utils/errorHandler';
 
-export async function handleSignUp(formData, navigate, setError, setLoading) {
+export async function handleSignUp(formData, navigate, onError, setLoading) {
   try {
-    setError('');
     setLoading(true);
 
     // Validation
@@ -19,20 +19,20 @@ export async function handleSignUp(formData, navigate, setError, setLoading) {
       language: formData.language,
     });
 
-    // Navigate to email verification page instead of directly to my-trees
+    // Navigate to email verification
     navigate('/verify-email');
 
   } catch (err) {
-    setError(err.message);
+    const userFriendlyMessage = getErrorMessage(err);
+    onError(userFriendlyMessage);
     throw err;
   } finally {
     setLoading(false);
   }
 }
 
-export async function handleGoogleSignUp(navigate, setError, setLoading) {
+export async function handleGoogleSignUp(navigate, onError, setLoading) {
   try {
-    setError('');
     setLoading(true);
 
     // Call auth service for Google sign up
@@ -42,7 +42,8 @@ export async function handleGoogleSignUp(navigate, setError, setLoading) {
     navigate('/my-trees');
 
   } catch (err) {
-    setError(err.message);
+    const userFriendlyMessage = getErrorMessage(err);
+    onError(userFriendlyMessage);
     throw err;
   } finally {
     setLoading(false);

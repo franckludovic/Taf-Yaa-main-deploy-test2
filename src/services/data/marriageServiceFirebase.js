@@ -21,23 +21,30 @@ const getCurrentTimestamp = () => serverTimestamp();
 
 async function addMarriage(marriage) {
   try {
-    // Check if marriage with same ID already exists
-    const existingMarriage = await getMarriage(marriage.id);
-    if (existingMarriage) {
-      console.warn("marriageServiceFirebase.addMarriage -> duplicate marriage id detected:", marriage.id);
-      marriage = { ...marriage, id: generateId("marriage") };
+    // Ensure an id
+    if (!marriage?.id) {
+      marriage.id = generateId("marriage");
     }
 
+    // Must have treeId for rules and indexing
+    if (!marriage?.treeId) {
+      console.error("addMarriage -> missing treeId:", marriage);
+      throw new Error("Missing treeId for marriage");
+    }
+
+    // Prepare marriage document to write (don't pre-read to avoid rule denial on non-existent doc)
     const marriageRef = doc(db, 'marriages', marriage.id);
     const marriageData = {
       ...marriage,
-      active: true, // Add active field for better querying
+      active: true,
       createdAt: getCurrentTimestamp(),
-      updatedAt: getCurrentTimestamp()
+      updatedAt: getCurrentTimestamp(),
+      createdBy: marriage.createdBy || null
     };
 
+    console.log("addMarriage -> writing marriage:", marriageData);
     await setDoc(marriageRef, marriageData);
-    return marriage;
+    return marriageData;
   } catch (error) {
     throw new Error(`Failed to add marriage: ${error.message}`);
   }

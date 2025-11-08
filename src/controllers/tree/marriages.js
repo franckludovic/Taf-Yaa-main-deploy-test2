@@ -25,7 +25,7 @@ export async function addSpouseToMarriage(marriageId, personId, options = {}) {
   if (!marriage) throw new Error(`Marriage ${marriageId} not found`);
 
   const model = new MarriageModel(marriage.treeId, marriage.marriageType, marriage.createdBy);
-  model.marriage = marriage; // Hydrate the model with existing data.
+  model.marriage = marriage; 
 
   model.addSpouse(personId);
   const updated = await dataService.updateMarriage(marriageId, model.marriage);

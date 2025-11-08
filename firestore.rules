@@ -27,10 +27,10 @@ service cloud.firestore {
         && treeRef(treeId).data.settings.privacy.isPublic == true;
     }
 
-    function getMemberRole(treeId) {
-      return treeRef(treeId).data.roles[request.auth.uid];
-    }
-
+function getMemberRole(treeId) {
+  let roles = treeRef(treeId).data.roles;
+  return roles != null ? roles[request.auth.uid] : null;
+}
     function isTreeAdminOrModerator(treeId) {
       let role = getMemberRole(treeId);
       return role == 'admin' || role == 'moderator';
@@ -65,7 +65,9 @@ service cloud.firestore {
     match /people/{personId} {
       allow read: if isSignedIn() &&
         (isTreeMember(resource.data.treeId) || isTreePublic(resource.data.treeId));
-      allow create, update, delete: if isSignedIn() &&
+      // Use request.resource.data.treeId for create, resource.data for update/delete
+      allow create: if isSignedIn() && isTreeEditorOrAbove(request.resource.data.treeId);
+      allow update, delete: if isSignedIn() &&
         isTreeEditorOrAbove(resource.data.treeId);
       allow list: if isSignedIn(); 
     }
@@ -75,7 +77,8 @@ service cloud.firestore {
     match /marriages/{marriageId} {
       allow read: if isSignedIn() &&
         (isTreeMember(resource.data.treeId) || isTreePublic(resource.data.treeId));
-      allow create, update, delete: if isSignedIn() &&
+      allow create: if isSignedIn() && isTreeEditorOrAbove(request.resource.data.treeId);
+      allow update, delete: if isSignedIn() &&
         isTreeEditorOrAbove(resource.data.treeId);
       allow list: if isSignedIn();
     }
@@ -85,7 +88,8 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if isSignedIn() &&
         (isTreeMember(resource.data.treeId) || isTreePublic(resource.data.treeId));
-      allow create, update, delete: if isSignedIn() &&
+      allow create: if isSignedIn() && isTreeEditorOrAbove(request.resource.data.treeId);
+      allow update, delete: if isSignedIn() &&
         isTreeEditorOrAbove(resource.data.treeId);
       allow list: if isSignedIn();
     }
@@ -119,7 +123,8 @@ service cloud.firestore {
     match /media/{mediaId} {
       allow read: if isSignedIn() &&
         (isTreeMember(resource.data.treeId) || isTreePublic(resource.data.treeId));
-      allow create, update, delete: if isSignedIn() &&
+      allow create: if isSignedIn() && isTreeEditorOrAbove(request.resource.data.treeId);
+      allow update, delete: if isSignedIn() &&
         isTreeEditorOrAbove(resource.data.treeId);
       allow list: if isSignedIn();
     }
@@ -127,16 +132,26 @@ service cloud.firestore {
     //---------- INVITES ----------//
 
     match /invites/{inviteId} {
+      // for create use request.resource.data.treeId
       allow read, write: if isSignedIn() &&
-        isTreeEditorOrAbove(resource.data.treeId);
+        isTreeEditorOrAbove(
+          // choose request.resource for create, resource for others
+          request.resource != null ? request.resource.data.treeId : resource.data.treeId
+        );
     }
 
     //---------- JOIN REQUESTS ----------//
 
     match /joinRequests/{joinRequestId} {
+      // for create use request.resource.data.treeId; for reads/updates use resource.data
       allow read, write: if isSignedIn() &&
-        (isTreeAdminOrModerator(resource.data.treeId) ||
-        request.auth.uid == resource.data.requestedBy);
+        (
+          (request.resource != null 
+             ? isTreeAdminOrModerator(request.resource.data.treeId) 
+             : isTreeAdminOrModerator(resource.data.treeId)
+          ) ||
+          request.auth.uid == (request.resource != null ? request.resource.data.requestedBy : resource.data.requestedBy)
+        );
     }
   }
 }

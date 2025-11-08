@@ -15,6 +15,7 @@ import dataService from '../services/dataService';
 import useToastStore from '../store/useToastStore';
 import useModalStore from '../store/useModalStore';
 import { DeletePersonModal } from '../components/modals/DeletePersonModal';
+import LottieLoader from '../components/LottieLoader';
 
 import { UserPen, Trash2, Users, User, Settings, Users2, UserPlus, Ban } from 'lucide-react';
 import Pill from '../components/pill';
@@ -173,8 +174,13 @@ const MembersPage = () => {
 
   if (loading) {
     return (
-      <FlexContainer justify="center" align="center" padding="20px">
-        <Text>Loading members...</Text>
+      <FlexContainer justify="center" align="center" padding="20px" style={{ height: '100vh' }}>
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading members data...
+        </div>
       </FlexContainer>
     );
   }

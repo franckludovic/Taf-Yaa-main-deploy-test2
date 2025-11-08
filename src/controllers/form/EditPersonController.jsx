@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
-import EditPersonForm from "../../components/Edit Person/EditPersonForm.jsx";
-import dataService from "../../services/dataService.js";
-import useToastStore from "../../store/useToastStore.js";
-import useModalStore from "../../store/useModalStore.js";
+import React, { useState, useEffect } from 'react';
+import LottieLoader from '../../components/LottieLoader';
+import EditPersonForm from '../../components/Edit Person/EditPersonForm.jsx';
+import dataService from '../../services/dataService.js';
+import useToastStore from '../../store/useToastStore.js';
+import useModalStore from '../../store/useModalStore.js';
 
 const EditPersonController = ({ personId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false); // <-- added
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState(null);
 
@@ -16,11 +18,24 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
     const fetchPersonData = async () => {
       try {
         const person = await dataService.getPerson(personId);
-        if (!person) throw new Error("Person not found");
+        if (!person) throw new Error('Person not found');
 
-        const marriages = await dataService.getMarriagesByPersonId(personId);
-        const events = await dataService.getEventsByPersonId(personId);
-        const stories = await dataService.getStoriesByPersonId(personId);
+        // Ensure we pass treeId to services that require it
+        const treeId = person.treeId;
+
+        // fetch marriages/events/stories with treeId to satisfy rules/services
+        const marriages = await dataService.getMarriagesByPersonId(personId, treeId).catch((e) => {
+          console.warn('getMarriagesByPersonId failed:', e);
+          return [];
+        });
+        const events = await dataService.getEventsByPersonId(personId, treeId).catch((e) => {
+          console.warn('getEventsByPersonId failed:', e);
+          return [];
+        });
+        const stories = await dataService.getStoriesByPersonId(personId, treeId).catch((e) => {
+          console.warn('getStoriesByPersonId failed:', e);
+          return [];
+        });
         const photos = person.photos || [];
 
         setFormData({
@@ -31,8 +46,8 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
           photos,
         });
       } catch (err) {
-        setError("Failed to load person data.");
-        console.error("EditPersonController:", err);
+        setError('Failed to load person data.');
+        console.error('EditPersonController:', err);
       } finally {
         setLoading(false);
       }
@@ -43,6 +58,7 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
 
   const handleSubmit = async (updatedData) => {
     setLoading(true);
+    setSaving(true); // <-- start saving state
     setError(null);
     try {
       const {
@@ -84,13 +100,13 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
         language: language || null,
         privacyLevel: privacyLevel || 'membersOnly',
         allowGlobalMatching: !!allowGlobalMatching,
-        isPlaceholder: false 
+        isPlaceholder: false,
       };
 
       // Upload profile photo if a File was provided
       if (profilePhoto instanceof File) {
         try {
-          const uploaded = await dataService.uploadMedia(profilePhoto, formData.person.treeId, personId, 'current-user', "profile");
+          const uploaded = await dataService.uploadMedia(profilePhoto, formData.person.treeId, personId, 'current-user', 'profile');
           updates.photoUrl = uploaded.url;
         } catch (e) {
           console.warn('Profile photo upload failed, keeping existing photoUrl', e);
@@ -103,7 +119,7 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
         for (const p of photos) {
           if (p?.file instanceof File) {
             try {
-              const uploaded = await dataService.uploadMedia(p.file, formData.person.treeId, personId, 'current-user', "profile");
+              const uploaded = await dataService.uploadMedia(p.file, formData.person.treeId, personId, 'current-user', 'profile');
               normalized.push({ url: uploaded.url, alt: p.alt || updatedData.fullName || 'Photo' });
             } catch (e) {
               console.warn('Photo upload failed for one item', e);
@@ -119,9 +135,9 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
       try {
         const originalStories = Array.isArray(formData?.stories) ? formData.stories : [];
         const submittedStories = Array.isArray(stories) ? stories : [];
-        const originalIds = new Set(originalStories.map(s => s?.id).filter(Boolean));
-        const submittedIds = new Set(submittedStories.map(s => s?.id).filter(Boolean));
-        const toDelete = [...originalIds].filter(id => !submittedIds.has(id));
+        const originalIds = new Set(originalStories.map((s) => s?.id).filter(Boolean));
+        const submittedIds = new Set(submittedStories.map((s) => s?.id).filter(Boolean));
+        const toDelete = [...originalIds].filter((id) => !submittedIds.has(id));
 
         for (const storyId of toDelete) {
           try {
@@ -136,29 +152,69 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
 
       await dataService.updatePerson(personId, updates);
 
-      addToast("Person updated successfully!", "success");
+      addToast('Person updated successfully!', 'success');
       onSuccess && onSuccess(updates);
-      closeModal("editPerson");
+      closeModal('editPerson');
 
       if (typeof window !== 'undefined' && window.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent('familyDataChanged', {
-          detail: { updatedPersonId: personId }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('familyDataChanged', {
+            detail: { updatedPersonId: personId },
+          })
+        );
       }
     } catch (err) {
-      setError("Failed to update person.");
-      addToast("Failed to update person.", "error");
-      console.error("EditPersonController.handleSubmit:", err);
+      setError('Failed to update person.');
+      addToast('Failed to update person.', 'error');
+      console.error('EditPersonController.handleSubmit:', err);
     } finally {
+      setSaving(false); // <-- stop saving state
       setLoading(false);
     }
   };
 
-  if (loading) return <div>Loading person data...</div>;
+  // show initial loading loader (unchanged)
+  if (loading)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading person data...
+        </div>
+      </div>
+    );
+
+  // NEW: show blocking saving loader while submit is in progress
+  if (saving) return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24
+    }}>
+      <div style={{ width: 220, maxWidth: '60vw' }}>
+        <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+      </div>
+      <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+        Saving person data
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {error && <div style={{ color: 'red' }}>{error}</div>}
       {formData && (
         <EditPersonForm
           initialData={formData}

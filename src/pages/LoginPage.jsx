@@ -6,18 +6,23 @@ import Button from '../components/Button';
 import Text from '../components/Text';
 import Checkbox from '../components/Checkbox';
 import { TextInput } from '../components/Input';
+import LottieLoader from '../components/LottieLoader';
+import useToastStore from '../store/useToastStore';
+import Toast from '../components/toasts/Toast';
+import { getErrorMessage } from '../utils/errorHandler';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
+
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useToastStore();
 
-  // Check for pending join invite on mount
+ 
   useEffect(() => {
     const pendingInvite = sessionStorage.getItem('pendingJoinInvite');
     if (pendingInvite) {
@@ -28,7 +33,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -52,7 +56,15 @@ export default function LoginPage() {
 
       navigate('/my-trees');
     } catch (err) {
-      setError(err.message);
+      console.log('Login error details:', {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+        fullError: err
+      });
+      const userFriendlyMessage = getErrorMessage(err);
+      console.log('Mapped error message:', userFriendlyMessage);
+      addToast(userFriendlyMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -61,6 +73,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url('/Images/background tree.png')" }}>
       <div className="absolute inset-0"></div>
+      <Toast />
       <div style={{
         background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.25))',
         borderRadius: '32px',
@@ -116,18 +129,22 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
-            </div>
-          )}
+
           <Button
             type="submit"
             disabled={loading}
             fullWidth
-            
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div style={{ width: 40, height: 40, marginRight: 8 }}>
+                  <LottieLoader name="loginLoader" aspectRatio={1} loop autoplay />
+                </div>
+                Logging in...
+              </div>
+            ) : (
+              'Log In'
+            )}
           </Button>
         </form>
         <div className="mt-6 text-center">

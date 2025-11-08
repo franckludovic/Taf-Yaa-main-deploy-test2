@@ -1,14 +1,40 @@
-// AddSpouseModal.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useModalStore from '../../../store/useModalStore';
 import AddSpouseController from "../../../controllers/form/AddSpouseController";
 import '../../../styles/AddRelativeModal.css';
 import { X } from 'lucide-react';
 import Card from '../../../layout/containers/Card';
+import LottieLoader from '../../LottieLoader';
+import { preloadLottie } from '../../../assets/lotties/lottieMappings';
 
 export default function AddSpouseModal({ targetNodeId, partnerName, onSuccess, treeId }) {
   const { modals, closeModal } = useModalStore();
   const isOpen = modals.addSpouseModal || false;
+  const [saving, setSaving] = useState(false);
+  const [readyToShow, setReadyToShow] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!isOpen) {
+      setReadyToShow(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        await preloadLottie('addPerson');
+        if (!mounted) return;
+        setReadyToShow(true);
+      } catch (err) {
+        console.error('AddSpouseModal preload error', err);
+        if (mounted) setReadyToShow(true);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen]);
 
   const handleSuccess = (result) => {
     if (onSuccess) onSuccess(result);
@@ -16,6 +42,7 @@ export default function AddSpouseModal({ targetNodeId, partnerName, onSuccess, t
   };
 
   const handleClose = () => {
+    if (saving) return;
     closeModal('addSpouseModal');
   };
 
@@ -46,13 +73,20 @@ export default function AddSpouseModal({ targetNodeId, partnerName, onSuccess, t
         </div>
 
         <div className="modal-body">
-          {targetNodeId && (
-            <AddSpouseController
-              treeId={treeId}
-              existingSpouseId={targetNodeId}
-              onSuccess={handleSuccess}
-              onCancel={handleClose}
-            />
+          {!readyToShow ? (
+            <div style={{ padding: 24, minWidth: 360, minHeight: 180 }}>
+              <LottieLoader name="addPerson" aspectRatio={2} loop autoplay />
+            </div>
+          ) : (
+            targetNodeId && (
+              <AddSpouseController
+                treeId={treeId}
+                existingSpouseId={targetNodeId}
+                onSuccess={handleSuccess}
+                onCancel={handleClose}
+                onSaving={(isSaving) => setSaving(!!isSaving)}
+              />
+            )
           )}
         </div>
       </div>

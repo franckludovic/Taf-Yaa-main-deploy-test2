@@ -1,13 +1,14 @@
 // src/controllers/AddSpouseController.jsx
 import React, { useState, useEffect, useRef } from "react";
 import AddSpouseForm from "../../components/Add Relatives/Spouse/AddSpouseForm.jsx";
-import { addSpouse } from "../tree/addSpouse"; 
+import {addSpouse} from "../tree/addSpouse";
 import dataService from "../../services/dataService.js";
-import { MarriageModel } from "../../models/treeModels/MarriageModel.js"; 
+import { MarriageModel } from "../../models/treeModels/MarriageModel.js";
 import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js";
+import LottieLoader from "../../components/LottieLoader";
 
-const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) => {
+const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, onSaving }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -29,7 +30,7 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) 
         let suggestedOrder = 1;
         const polygamousMarriage = existingMarriages.find(m => m.marriageType === "polygamous");
         if (polygamousMarriage) {
-          suggestedOrder = new MarriageModel(polygamousMarriage).getNextWifeOrder(); 
+          suggestedOrder = new MarriageModel(polygamousMarriage).getNextWifeOrder();
         }
 
         setFormProps({
@@ -72,7 +73,6 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) 
     });
   };
 
-  
 
   const handleSubmit = async (formData) => {
     if (isSubmitting || hasSubmitted.current) return;
@@ -81,6 +81,8 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) 
     setError(null);
 
     try {
+      // notify parent modal that saving is starting
+      if (typeof onSaving === 'function') onSaving(true);
 
       const result = await addSpouse(treeId, existingSpouseId, formData, {
       
@@ -94,12 +96,12 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) 
       if (result && !hasSubmitted.current) {
         hasSubmitted.current = true;
         addToast("Spouse added successfully!", "success");
-        onSuccess?.(result);
-        closeModal("addSpouse"); 
+        if (typeof onSuccess === 'function') onSuccess(result);
+        closeModal("addSpouseModal"); 
       } else if (!result && !hasSubmitted.current) {
         setIsSubmitting(false);
         setError("Operation could not be completed. Please check the rules.");
-        closeModal("addSpouse");
+        closeModal("addSpouseModal");
       }
     } catch (err) {
       if (!hasSubmitted.current) {
@@ -111,21 +113,64 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel }) 
       if (!hasSubmitted.current) {
         setIsSubmitting(false);
       }
+      // always notify parent that saving finished
+      if (typeof onSaving === 'function') onSaving(false);
     }
   };
 
-  if (isLoading) return <div>Loading form...</div>;
+  
+  if (isLoading)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading form data...
+        </div>
+      </div>
+    );
 
   return (
-    <>
+    <div>
       {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
+      {isSubmitting ? (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255, 255, 255, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10
+        }}>
+          <div style={{ width: 220, maxWidth: '60vw' }}>
+            <LottieLoader name="addPerson" aspectRatio={3} loop autoplay />
+          </div>
+          <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+            Adding Spouse...
+          </div>
+        </div>
+      ) : null}
       <AddSpouseForm
         onSubmit={handleSubmit}
         onCancel={onCancel}
         {...formProps}
         isSubmitting={isSubmitting}
       />
-    </>
+    </div>
   );
 };
 

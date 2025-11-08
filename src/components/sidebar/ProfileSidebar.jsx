@@ -18,6 +18,7 @@ import dataService from '../../services/dataService';
 import Row from '../../layout/containers/Row';
 import Button from '../Button';
 import Spacer from '../Spacer';
+import LottieLoader from '../LottieLoader';
 import { getPrivacyLabel, getCountryLabel } from '../../models/treeModels/PersonModel';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +45,7 @@ export default function ProfileSidebar() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isAddEditEventModalOpen, setIsAddEditEventModalOpen] = useState(false);
   const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentEditingEvent, setCurrentEditingEvent] = useState(null);
   const [isAddingDescriptionMode, setIsAddingDescriptionMode] = useState(false);
@@ -57,7 +59,7 @@ export default function ProfileSidebar() {
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [isPNGModalOpen, setIsPNGModalOpen] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState("");
-  
+
   // Ref for capturing the profile sidebar
   const profileSidebarRef = useRef(null);
 
@@ -124,8 +126,11 @@ export default function ProfileSidebar() {
       setTimelineEvents([]);
       setAudioStories([]);
       setPhotos([]);
+      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
 
     async function loadFromDB() {
       console.debug('ProfileSidebar: loadFromDB start', activeProfileId);
@@ -327,6 +332,7 @@ export default function ProfileSidebar() {
         });
       }
       setPhotos(personPhotos);
+      setIsLoading(false);
     }
 
     // initial load
@@ -343,6 +349,30 @@ export default function ProfileSidebar() {
       window.removeEventListener('familyDataChanged', onFamilyDataChanged);
     };
   }, [activeProfileId]);
+
+  if (isLoading) {
+    return (
+      <FlexContainer gap='12px' backgroundColor="var(--color-background)" ref={profileSidebarRef} className="profile-sidebar" style={{ position: 'relative', height: '100%' }}>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ width: 220, maxWidth: '60vw' }}>
+            <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+          </div>
+          <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+            Loading profile data...
+          </div>
+        </div>
+      </FlexContainer>
+    );
+  }
 
   if (!profileData) {
     return null;

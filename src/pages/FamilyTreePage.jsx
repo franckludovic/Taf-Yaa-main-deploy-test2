@@ -7,6 +7,8 @@ import { TreeProvider } from "../context/TreeContext.jsx";
 import useModalStore from "../store/useModalStore";
 import Loading from "../components/Loading.jsx";
 import { getLottieData } from "../assets/lotties/lottieMappings.js";
+import FlexContainer from "../layout/containers/FlexContainer";
+import LottieLoader from "../components/LottieLoader";
 
 export default function FamilyTreePage() {
   const { treeId } = useParams();
@@ -19,7 +21,7 @@ export default function FamilyTreePage() {
 
   // Preload Lottie data for instant loading
   useEffect(() => {
-    getLottieData('treeDataLoader').then(data => {
+    getLottieData('treeDataLoader1').then(data => {
       if (data) setLottieData(data);
     });
   }, []);
@@ -66,7 +68,16 @@ export default function FamilyTreePage() {
     }
   }, [loading, tree, navigate]); 
 if (loading) {
-  return <Loading variant="lottie" animationData={lottieData} size="lg" message="Loading your family tree..." fullScreen />;
+  return (
+    <FlexContainer justify="center" align="center" padding="20px" style={{ height: 'calc(100vh - var(--topbar-height))' }}>
+      <div style={{ width: 220, maxWidth: '60vw' }}>
+        <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+      </div>
+      <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+        Loading your family tree...
+      </div>
+    </FlexContainer>
+  );
 }
 
 if (notFound || !tree) {

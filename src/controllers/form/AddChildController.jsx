@@ -1,8 +1,9 @@
 // src/controllers/AddChildController.jsx
 import React, { useState, useEffect } from "react";
 import AddChildForm from "../../components/Add Relatives/Child/AddChildForm.jsx";
-import { addChild } from "../tree/addChild"; 
+import { addChild } from "../tree/addChild";
 import dataService from "../../services/dataService.js";
+import LottieLoader from "../../components/LottieLoader.jsx";
 
 const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
 
 
       const result = await addChild(treeId, options);
-     
+
       if (onSuccess) onSuccess(result.child);
 
     } catch (err) {
@@ -99,19 +100,57 @@ const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
   };
 
 
-  if (isLoadingForm) {
-    return <div>Loading form...</div>;
-  }
+  if (isLoadingForm)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading Child data...
+        </div>
+      </div>
+    );
+
 
   return (
     <>
       {error && <div style={{ color: "red" }}>{error}</div>}
+      {loading ? (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255, 255, 255, 0.9)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10
+        }}>
+          <div style={{ width: 220, maxWidth: '60vw' }}>
+            <LottieLoader name="addPerson" aspectRatio={3} loop autoplay />
+          </div>
+          <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+            Adding Child...
+          </div>
+        </div>
+      ) : null}
       <AddChildForm
         onSubmit={handleSubmit}
         onCancel={onCancel}
         {...formProps}
       />
-      {loading && <div>Saving child...</div>}
     </>
   );
 };

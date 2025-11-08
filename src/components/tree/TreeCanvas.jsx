@@ -11,6 +11,7 @@ import "../../styles/TreeCanvas.css";
 
 import { useFamilyData } from "../../hooks/useFamilyData";
 import Loading from "../Loading.jsx";
+import LottieLoader from "../LottieLoader";
 import {
   calculateLayout,
   traceLineage,
@@ -88,9 +89,9 @@ const CustomMarkers = () => (
 );
 
 
-function TreeCanvasComponent({ treeId, lottieData }) {
+function TreeCanvasComponent({ treeId, _lottieData }) {
   // - Hooks -
-  const { people: allPeople, marriages: allMarriages, loading, reload } =
+  const { people: allPeople, marriages: allMarriages, _loading, reload } =
     useFamilyData(treeId);
 
   const [treeData, setTreeData] = useState(null);
@@ -293,7 +294,18 @@ useEffect(() => {
 
 
 
-  if (loading || !viewRootId) return <Loading variant="lottie" animationData={lottieData} size="lg" message="Loading family tree..." portal scale={4} />;
+  if (!viewRootId) {
+    return (
+      <div style={{ height: "100%", width: "100%", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="treeDataLoader1" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading family tree...
+        </div>
+      </div>
+    );
+  }
 
 
 
