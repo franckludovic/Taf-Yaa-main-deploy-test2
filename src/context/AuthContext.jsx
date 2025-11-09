@@ -33,9 +33,7 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Redirect unverified users to email verification page
-  // TEMPORARILY DISABLED FOR DEV TESTING - RE-ENABLE AFTER TESTING
-  /*
+ 
   useEffect(() => {
     if (!loading && currentUser && !currentUser.emailVerified) {
       // Only redirect if not already on verification page
@@ -44,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
   }, [currentUser, loading]);
-  */
+  
 
   const value = {
     currentUser,

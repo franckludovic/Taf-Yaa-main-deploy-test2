@@ -27,6 +27,8 @@ import JoinRequestPage from "./pages/JoinRequestPage.jsx";
 import Custom404Page from "./components/Custom404Page.jsx";
 import TreeSettingsPage from "./pages/TreeSettingsPage.jsx";
 import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
+import SearchTreesPage from "./pages/SearchTreesPage.jsx";
+import PublicTreePage from "./pages/PublicTreePage.jsx";
 import Loading from "./components/Loading.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 
@@ -210,6 +212,16 @@ const router = createBrowserRouter([
   {
     path: "/join-request",
     element: <JoinRequestPage />,
+    errorElement: <Custom404Page />,
+  },
+  {
+    path: "/search",
+    element: <SearchTreesPage />,
+    errorElement: <Custom404Page />,
+  },
+  {
+    path: "/public-tree/:treeId",
+    element: <PublicTreePage />,
     errorElement: <Custom404Page />,
   },
 

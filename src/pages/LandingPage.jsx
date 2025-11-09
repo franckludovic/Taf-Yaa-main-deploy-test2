@@ -48,8 +48,25 @@ const LandingPageHTML = () => {
                                     className="w-full bg-transparent border-none text-white placeholder-gray-300 focus:ring-0 focus:outline-none text-lg pl-4"
                                     placeholder="Search public family trees by name or clan..."
                                     type="text"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const searchTerm = e.target.value.trim();
+                                            if (searchTerm) {
+                                                navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+                                            }
+                                        }
+                                    }}
                                 />
-                                <button className="bg-white text-white p-3 rounded-full hover:bg-primary/90 transition-colors flex-shrink-0">
+                                <button
+                                    className="bg-white text-white p-3 rounded-full hover:bg-primary/90 transition-colors flex-shrink-0"
+                                    onClick={() => {
+                                        const input = document.querySelector('input[placeholder="Search public family trees by name or clan..."]');
+                                        const searchTerm = input?.value.trim();
+                                        if (searchTerm) {
+                                            navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+                                        }
+                                    }}
+                                >
                                     <SearchIcon size={28} color="#333" />
                                 </button>
                             </div>

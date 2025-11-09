@@ -21,6 +21,7 @@ import WarningModal from '../components/modals/WarningModal';
 import PurgeModal from '../components/modals/PurgeModal';
 import TreeCard from '../components/TreeCard';
 import Pagination from '../components/Pagination';
+import LottieLoader from '../components/LottieLoader';
 
 import '../styles/PersonMenu.css';
 import { Users, User, CircleUserRound, MapPinHouse, GitCompareArrows, Settings, Filter } from 'lucide-react';
@@ -337,8 +338,13 @@ const MyTreesPage = () => {
 
   if (loading) {
     return (
-      <FlexContainer justify="center" align="center" padding="20px">
-        <Text>Loading your trees...</Text>
+      <FlexContainer justify="center" align="center" padding="20px" style={{ height: '100vh' }}>
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="treeDataLoader2" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading your trees...
+        </div>
       </FlexContainer>
     );
   }
