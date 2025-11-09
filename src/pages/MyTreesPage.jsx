@@ -218,7 +218,7 @@ const MyTreesPage = () => {
   };
 
   const handleJoinTree = () => {
-    addToast(`join tree functionslity not yet implemented on tree but it is on the way no worries`, 'error')
+    openModal('joinModal');
   }
 
 

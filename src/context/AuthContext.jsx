@@ -34,14 +34,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
  
-  useEffect(() => {
-    if (!loading && currentUser && !currentUser.emailVerified) {
-      // Only redirect if not already on verification page
-      if (window.location.pathname !== '/verify-email') {
-        window.location.href = '/verify-email';
-      }
-    }
-  }, [currentUser, loading]);
+  // useEffect(() => {
+  //   if (!loading && currentUser && !currentUser.emailVerified) {
+  //     if (window.location.pathname !== '/verify-email') {
+  //       window.location.href = '/verify-email';
+  //     }
+  //   }
+  // }, [currentUser, loading]);
   
 
   const value = {

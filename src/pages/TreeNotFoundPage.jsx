@@ -1,7 +1,6 @@
 // src/components/TreeNotFound.js
 
 import React from 'react';
-// Import icons from the lucide-react library
 import { ArrowLeft, Search } from 'lucide-react';
 
 const TreeNotFound = () => {
@@ -25,7 +24,7 @@ const TreeNotFound = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+     
       <main className="flex flex-col items-center justify-center text-center px-4 pt-10 sm:pt-16">
         
         {/* Placeholder for the image/graphic */}

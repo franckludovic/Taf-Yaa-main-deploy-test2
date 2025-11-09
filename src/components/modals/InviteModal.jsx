@@ -43,7 +43,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
       const loadData = async () => {
         try {
           const peopleData = await dataService.getPeopleByTreeId(treeId);
-          const allMarriages = await dataService.getAllMarriages();
+          const allMarriages = await dataService.getAllMarriages(treeId);
           // Filter marriages to only those involving people from this tree
           const marriagesData = allMarriages.filter(m => {
             if (m.marriageType === 'monogamous') {
