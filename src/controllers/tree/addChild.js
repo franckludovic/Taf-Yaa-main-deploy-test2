@@ -6,11 +6,10 @@ import { addBirth, addDeath, addCustom } from "./events";
 import { createMarriage, addChildToMarriage } from "./marriages";
 import { validateEventsArray } from "../../utils/treeUtils/eventValidation";
 import { validatePersonData } from "../../utils/validation/personValidation";
-
-import { Description } from "@headlessui/react";
+import { addStory } from "./stories";
 
 export async function addChild(treeId, options) {
-  const { marriageId, parentId, childData, motherId, createdBy = "system" } = options;
+  const { marriageId, parentId, childData, motherId, createdBy} = options;
 
   try {
     if (!marriageId && !parentId) {
@@ -71,16 +70,19 @@ export async function addChild(treeId, options) {
       }
     }
 
-    if (childData.audioFile || childData.storyTitle) {
-      if (childData.audioFile) {
-        await dataService.uploadStory(childData.audioFile, treeId, newChild.id, createdBy, {
-          title: childData.storyTitle || "Life Story",
-          subTitle: null,
-          description: null,
-          tags: [],
-          visibility: 'public'
-        });
-      }
+    // Create story if story data is provided
+    if (childData.title || childData.description || childData.attachments?.length > 0) {
+      const storyData = {
+        treeId,
+        personId: newChild.id,
+        createdBy,
+        title: childData.title || "Life Story",
+        location: childData.location || null,
+        description: childData.description || null,
+        tags: childData.tags ? childData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        attachments: childData.attachments || []
+      };
+      await addStory(storyData);
     }
 
     // 3. Add to existing marriage

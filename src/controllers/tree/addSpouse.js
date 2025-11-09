@@ -3,7 +3,7 @@ import dataService from "../../services/dataService";
 import { createPerson } from "../../models/treeModels/PersonModel";
 import { handleSpouseAddition } from "./marriages";
 import { addBirth, addDeath, addCustom } from "./events";
-import { createAudioStory } from "./stories";
+import { addStory } from "./stories";
 import { validateEventsArray } from "../../utils/treeUtils/eventValidation";
 import { validatePersonData } from "../../utils/validation/personValidation";
 import { validateMarriageData } from "../../utils/validation/marriageValidation";
@@ -85,15 +85,20 @@ export async function addSpouse(treeId, existingSpouseId, newSpouseData, options
                     await addCustom(treeId, [newSpouse.id], ev.customType, ev);
                 }
             }
-            if (newSpouseData.audioFile || newSpouseData.storyTitle) {
-                await createAudioStory({
-                    treeId: treeId,
+            // Create story if story data is provided
+            if (newSpouseData.title || newSpouseData.description || newSpouseData.attachments?.length > 0) {
+                const storyData = {
+                    treeId,
                     personId: newSpouse.id,
-                    addedBy: createdBy,
-                    storyTitle: newSpouseData.storyTitle,
-                    language: newSpouseData.language,
-                    audioFile: newSpouseData.audioFile, 
-                });
+                    createdBy,
+                    title: newSpouseData.title || "Life Story",
+                    description: newSpouseData.description || null,
+                    location: newSpouseData.location || null,
+                    time: newSpouseData.time || null,
+                    tags: newSpouseData.tags ? newSpouseData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+                    attachments: newSpouseData.attachments || []
+                };
+                await addStory(storyData);
             }
 
         }

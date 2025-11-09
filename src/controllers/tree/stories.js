@@ -6,7 +6,7 @@ import { createStory } from "../../models/treeModels/StoryModel";
 export async function addStory(params) {
   console.log("DBG:stories.addStory ->", params);
 
-  // Use the factory from the StoryModel to ensure the object is valid.
+ 
   const story = createStory(params);
 
   // Persist the valid story object using the data service.
@@ -36,7 +36,7 @@ export async function createAudioStory(params) {
       // Upload audio file using the story upload service - this now creates a complete story
       const uploaded = await dataService.uploadStory(audioFile, treeId, personId, addedBy, {
         title: storyTitle || "Oral History",
-        subTitle: subtitle || null,
+        location: subtitle || null,
         description: subtitle || null,
         tags: Array.isArray(tags) && tags.length ? tags : [],
         visibility: 'public',
@@ -67,7 +67,7 @@ export async function createAudioStory(params) {
       personId,
       createdBy: addedBy,
       title: storyTitle,
-      subTitle: subtitle || null,
+      location: subtitle || null,
       description: subtitle || null,
       attachments: [],
       tags: Array.isArray(tags) && tags.length ? tags : [],

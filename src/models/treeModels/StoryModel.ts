@@ -24,7 +24,7 @@ export interface Story {
   treeId: string;
   personId?: string; // Optional: whose story it is
   title: string;
-  subTitle?: string;
+  location?: string;
   description?: string;
   tags?: string[];
 
@@ -85,7 +85,7 @@ export const createStory = (params: {
   treeId: string;
   personId?: string;
   title: string;
-  subTitle?: string;
+  location?: string;
   description?: string;
   attachments?: StoryAttachment[];
   createdBy: string;
@@ -106,13 +106,10 @@ export const createStory = (params: {
     });
   }
 
-  return {
+  const result: any = {
     id: generateId("story"),
     treeId: params.treeId,
-    personId: params.personId,
     title: params.title,
-    subTitle: params.subTitle,
-    description: params.description,
     attachments: params.attachments || [],
     createdBy: params.createdBy,
     contributors: Array.from(contributors),
@@ -130,6 +127,12 @@ export const createStory = (params: {
     createdAt: null, // Will be set by Firestore
     updatedAt: null, // Will be set by Firestore
   };
+
+  if (params.personId != null) result.personId = params.personId;
+  if (params.location != null) result.location = params.location;
+  if (params.description != null) result.description = params.description;
+
+  return result as Story;
 };
 
 /** Quick tag adder */

@@ -7,6 +7,7 @@ import { MarriageModel } from "../../models/treeModels/MarriageModel.js";
 import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js";
 import LottieLoader from "../../components/LottieLoader";
+import { auth } from "../../config/firebase.js";
 
 const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, onSaving }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +86,8 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
       if (typeof onSaving === 'function') onSaving(true);
 
       const result = await addSpouse(treeId, existingSpouseId, formData, {
-      
+        createdBy: auth.currentUser?.uid || "anonymous",
+
         onError: (msg, type) => {
           addToast(msg, type || "error");
         },

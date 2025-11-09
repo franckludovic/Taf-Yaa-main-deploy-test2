@@ -4,6 +4,7 @@ import AddChildForm from "../../components/Add Relatives/Child/AddChildForm.jsx"
 import { addChild } from "../tree/addChild";
 import dataService from "../../services/dataService.js";
 import LottieLoader from "../../components/LottieLoader.jsx";
+import { auth } from "../../config/firebase.js";
 
 const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -84,6 +85,7 @@ const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
         marriageId: parentMarriage ? parentMarriage.id : null,
         motherId: formData.motherId || null,
         parentId: !parentMarriage ? parent.id : null,
+        createdBy: auth.currentUser?.uid || "anonymous",
       };
 
 

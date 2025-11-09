@@ -3,13 +3,13 @@ import { createPerson } from "../../models/treeModels/PersonModel";
 import dataService from "../../services/dataService";
 import { addBirth, addDeath, addCustom } from "./events";
 import { createMarriage } from "./marriages";
-import { createAudioStory } from "./stories";
+import { addStory } from "./stories";
 import { validateEventsArray } from "../../utils/treeUtils/eventValidation";
 import { validatePersonData } from "../../utils/validation/personValidation";
 
 
 export async function addParentToChild(treeId, childId, parentData, options = {}) {
-  const { createdBy = "system" } = options;
+  const { createdBy } = options;
 
   try {
     //  STEP 1: Find or create new parent person
@@ -76,14 +76,20 @@ export async function addParentToChild(treeId, childId, parentData, options = {}
         }
       }
 
-      if (parentData.audioFile || parentData.storyTitle) {
-        await createAudioStory({
+      // Create story if story data is provided
+      if (parentData.title || parentData.description || parentData.attachments?.length > 0) {
+        const storyData = {
           treeId,
           personId: newParent.id,
-          addedBy: createdBy,
-          storyTitle: parentData.storyTitle,
-          audioFile: parentData.audioFile,
-        });
+          createdBy,
+          title: parentData.title || "Life Story",
+          description: parentData.description || null,
+          location: parentData.location || null,
+          time: parentData.time || null,
+          tags: parentData.tags ? parentData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+          attachments: parentData.attachments || []
+        };
+        await addStory(storyData);
       }
     }
 

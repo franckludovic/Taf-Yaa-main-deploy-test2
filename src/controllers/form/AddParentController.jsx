@@ -1,11 +1,12 @@
 // src/controllers/form/AddParentController.jsx
 import React, { useState, useEffect } from "react";
 import AddParentForm from "../../components/Add Relatives/Parent/AddParentForm.jsx";
-import { addParentToChild } from "../tree/addParent"; 
+import { addParentToChild } from "../tree/addParent";
 import dataService from "../../services/dataService.js";
 import useToastStore from "../../store/useToastStore.js";
-import useModalStore from "../../store/useModalStore.js"; 
+import useModalStore from "../../store/useModalStore.js";
 import LottieLoader from "../../components/LottieLoader.jsx";
+import { auth } from "../../config/firebase.js";
 
 const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,9 +84,10 @@ const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
     setError(null);
     try {
       const options = {
-        parentToMarryId: parentData.parentToMarryId || null, 
+        parentToMarryId: parentData.parentToMarryId || null,
+        createdBy: auth.currentUser?.uid || "anonymous",
 
-        confirmConvert: confirmConvertMarriage, 
+        confirmConvert: confirmConvertMarriage,
         onError: (msg, type) => addToast(msg, type || "error"),
       };
 
