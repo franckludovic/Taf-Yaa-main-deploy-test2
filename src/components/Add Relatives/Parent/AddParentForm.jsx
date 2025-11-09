@@ -8,11 +8,13 @@ import AudioUploadCard from '../../AudioUploadCard';
 import EventCard from '../../EventCard';
 import Row from '../../../layout/containers/Row';
 import Button from '../../Button';
-import { Users, User, BookOpen, Shield, Calendar } from 'lucide-react';
+import { Users, User, BookOpen, Shield, Calendar, Plus } from 'lucide-react';
 import Card from '../../../layout/containers/Card';
 import Text from '../../Text';
 import Column from '../../../layout/containers/Column';
 import countryList from "react-select-country-list";
+import AddAttachmentModal from '../../modals/AddAttachmentModal';
+import { ImageAttachmentCard, VideoAttachmentCard, AudioAttachmentCard, FileAttachmentCard } from '../../AttachmentCard';
 
 const AddParentForm = ({ onSubmit, onCancel, childName, isSubmitting = false }) => {
   const [formData, setFormData] = useState({
@@ -31,19 +33,19 @@ const AddParentForm = ({ onSubmit, onCancel, childName, isSubmitting = false }) 
     biography: '',
     tribe: '',
     language: '',
-
-    // Section 2: Oral History
-    storyTitle: '',
-    audioFile: null,
-
-    // Section 3: Events
-    events: [],
-
-    // Section 4: Privacy
+    // Story fields
+    title: '',
+    description: '',
+    location: '',
+    time: '',
+    tags: '',
+    attachments: [],
     privacyLevel: 'membersOnly',
     allowGlobalMatching: true,
-
+    events: []
   });
+
+  const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -275,35 +277,153 @@ const AddParentForm = ({ onSubmit, onCancel, childName, isSubmitting = false }) 
         </div>
       </div>
 
-      {/* Section 2: Oral History */}
+      {/* Section 2: Story */}
       <div className="section-card">
         <div className="section-header">
           <Card fitContent margin='0.5rem' className="section-icon">
             <BookOpen size={20} />
           </Card>
           <Column padding='0px' margin='0px' gap='1px'>
-            <Text as='p' variant='heading2'>Oral History</Text>
+            <Text as='p' variant='heading2'>Story</Text>
           </Column>
         </div>
 
         <div className="form-group">
-          <label className="form-label">First Audio Story Title</label>
+          <label className="form-label">Title</label>
           <TextInput
-            value={formData.storyTitle}
-            onChange={(e) => handleInputChange('storyTitle', e.target.value)}
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
             placeholder="Enter story title"
           />
         </div>
 
         <div className="form-group full-width">
-          <label className="form-label">Upload Audio Story</label>
-          <AudioUploadCard
-            onAudioUpload={(file, audioURL) => {
-              handleInputChange('audioFile', file);
-              handleInputChange('audioURL', audioURL);
-            }}
-            storyTitle={formData.storyTitle}
+          <label className="form-label">Description</label>
+          <TextArea
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Tell the story..."
+            rows={3}
           />
+        </div>
+
+        <Row gap='1rem' padding='0px' margin='0px'>
+          <div className="form-group">
+            <label className="form-label">Location</label>
+            <TextInput
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+              placeholder="e.g., Nairobi, Kenya"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Time</label>
+            <TextInput
+              value={formData.time}
+              onChange={(e) => handleInputChange('time', e.target.value)}
+              placeholder="e.g., 1995, Summer 2020"
+            />
+          </div>
+        </Row>
+
+        <div className="form-group">
+          <label className="form-label">Tags</label>
+          <TextInput
+            value={formData.tags}
+            onChange={(e) => handleInputChange('tags', e.target.value)}
+            placeholder="Comma-separated (e.g., family, childhood, celebration)"
+          />
+        </div>
+
+        <div className="form-group full-width">
+          <label className="form-label">Attachments</label>
+          <Row gap="0.5rem" padding="0px" margin="0px" wrap="wrap">
+            {formData.attachments.map((attachment, index) => {
+              const renderAttachmentCard = () => {
+                switch (attachment.type) {
+                  case 'image':
+                    return (
+                      <ImageAttachmentCard
+                        key={index}
+                        src={attachment.url}
+                        alt={attachment.caption}
+                        caption={attachment.caption}
+                        uploader={attachment.uploadedBy}
+                        onDelete={() => {
+                          const newAttachments = formData.attachments.filter((_, i) => i !== index);
+                          handleInputChange('attachments', newAttachments);
+                        }}
+                        attachmentId={attachment.attachmentId}
+                      />
+                    );
+                  case 'video':
+                    return (
+                      <VideoAttachmentCard
+                        key={index}
+                        src={attachment.url}
+                        alt={attachment.caption}
+                        caption={attachment.caption}
+                        uploader={attachment.uploadedBy}
+                        duration={attachment.duration}
+                        onDelete={() => {
+                          const newAttachments = formData.attachments.filter((_, i) => i !== index);
+                          handleInputChange('attachments', newAttachments);
+                        }}
+                        attachmentId={attachment.attachmentId}
+                      />
+                    );
+                  case 'audio':
+                    return (
+                      <AudioAttachmentCard
+                        key={index}
+                        thumbnail={attachment.thumbnail}
+                        duration={attachment.duration}
+                        title={attachment.caption}
+                        uploader={attachment.uploadedBy}
+                        onDelete={() => {
+                          const newAttachments = formData.attachments.filter((_, i) => i !== index);
+                          handleInputChange('attachments', newAttachments);
+                        }}
+                        attachmentId={attachment.attachmentId}
+                      />
+                    );
+                  case 'pdf':
+                  case 'file':
+                    return (
+                      <FileAttachmentCard
+                        key={index}
+                        fileUrl={attachment.url}
+                        fileName={attachment.caption}
+                        onDelete={() => {
+                          const newAttachments = formData.attachments.filter((_, i) => i !== index);
+                          handleInputChange('attachments', newAttachments);
+                        }}
+                        attachmentId={attachment.attachmentId}
+                      />
+                    );
+                  default:
+                    return null;
+                }
+              };
+              return renderAttachmentCard();
+            })}
+            <Card
+              onClick={() => setIsAttachmentModalOpen(true)}
+              style={{
+                width: '120px',
+                height: '120px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                border: '2px dashed #ccc',
+                borderRadius: '12px',
+                backgroundColor: '#f9f9f9'
+              }}
+            >
+              <Plus size={24} color="#666" />
+            </Card>
+          </Row>
         </div>
       </div>
 
@@ -363,6 +483,16 @@ const AddParentForm = ({ onSubmit, onCancel, childName, isSubmitting = false }) 
           Add Parent
         </Button>
       </Row>
+
+      {/* Add Attachment Modal */}
+      <AddAttachmentModal
+        isOpen={isAttachmentModalOpen}
+        onClose={() => setIsAttachmentModalOpen(false)}
+        onAttachmentAdded={(attachment) => {
+          handleInputChange('attachments', [...formData.attachments, attachment]);
+          setIsAttachmentModalOpen(false);
+        }}
+      />
     </form>
   );
 };
