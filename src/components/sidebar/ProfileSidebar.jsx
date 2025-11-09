@@ -26,10 +26,8 @@ import { useAuth } from '../../context/AuthContext';
 
 import PhotoUploadModal from './PhotoUploadModal';
 
-// Download modals
-import DownloadProfileModal from './ProfileSidebarComponents/DownloadProfileModal';
-import PDFDownloadModal from './ProfileSidebarComponents/PDFDownloadModal';
-import PNGDownloadModal from './ProfileSidebarComponents/PNGDownloadModal';
+// Download modal
+import ProfileExportModal from './ProfileSidebarComponents/ProfileExportModal';
 
 export default function ProfileSidebar() {
   const [profileData, setProfileData] = useState({});
@@ -54,10 +52,8 @@ export default function ProfileSidebar() {
   const { treeId } = useParams();
   const { currentUser } = useAuth();
 
-  // Download modal states
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [isPNGModalOpen, setIsPNGModalOpen] = useState(false);
+  // Download modal state
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState("");
 
   // Ref for capturing the profile sidebar
@@ -84,19 +80,10 @@ export default function ProfileSidebar() {
     openModal('editPerson', { personId: activeProfileId });
   };
 
-  // Download handlers
+  // Download handler
   const handleDownload = () => {
     setSelectedProfileName(profileData.profileName || "profile");
-    setIsDownloadModalOpen(true);
-  };
-
-  const handleDownloadSelect = (format) => {
-    setIsDownloadModalOpen(false);
-    if (format === "pdf") {
-      setIsPDFModalOpen(true);
-    } else if (format === "png") {
-      setIsPNGModalOpen(true);
-    }
+    setIsExportModalOpen(true);
   };
 
 
@@ -449,25 +436,11 @@ export default function ProfileSidebar() {
       </Row>
 
 
-      {/* Download Modals */}
-      <DownloadProfileModal
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-        onSelect={handleDownloadSelect}
-      />
-
-      <PDFDownloadModal
-        isOpen={isPDFModalOpen}
-        onClose={() => setIsPDFModalOpen(false)}
+      {/* Export Modal */}
+      <ProfileExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
         profileName={selectedProfileName}
-        profileRef={profileSidebarRef}
-      />
-
-      <PNGDownloadModal
-        isOpen={isPNGModalOpen}
-        onClose={() => setIsPNGModalOpen(false)}
-        profileName={selectedProfileName}
-        profileRef={profileSidebarRef}
       />
 
       <AddEditEvent

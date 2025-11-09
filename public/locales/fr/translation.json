@@ -86,7 +86,11 @@
     "export_settings": "Paramètres d'exportation",
     "format": "Format",
     "pdf_document": "Document PDF",
-    "png_image": "Image PNG"
+    "png_image": "Image PNG",
+    "print_export_profile": "Exporter Profil",
+    "choose_format_profile": "Choisissez votre format préféré pour télécharger ce profil.",
+    "pdf_description": "Meilleur pour l'impression et le partage de documents.",
+    "png_description": "Image de haute qualité pour une visualisation et un emboîtement faciles."
   },
 
   "relations": {
@@ -182,6 +186,7 @@
     "download": "Télécharger",
     "save": "Enregistrer",
     "export": "Exporter",
+    "print_export": "Exporter",
     "primary": "Bouton Principal",
     "secondary": "Secondaire",
     "loading": "Chargement",

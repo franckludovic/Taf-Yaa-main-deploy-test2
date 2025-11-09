@@ -86,7 +86,11 @@
     "export_settings": "Export Settings",
     "format": "Format",
     "pdf_document": "PDF Document",
-    "png_image": "PNG Image"
+    "png_image": "PNG Image",
+    "print_export_profile": "Export Profile",
+    "choose_format_profile": "Choose your preferred format to download this profile.",
+    "pdf_description": "Best for printing and sharing documents.",
+    "png_description": "High-quality image for easy viewing and embedding."
   },
 
   "relations": {
@@ -181,6 +185,7 @@
     "download": "Download",
     "save": "Save",
     "export": "Export",
+    "print_export": "Export",
     "primary": "Primary Button",
     "secondary": "Secondary",
     "loading": "Loading",

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import Row from '../../layout/containers/Row';
 import ImageCard from '../../layout/containers/ImageCard';
 import Text from '../Text';
+import Button from '../Button';
 import { useTranslation } from "react-i18next";
 import Submenu from '../Submenu';
 
@@ -101,22 +102,6 @@ export default function AdminNavbar() {
       }
     },
     {
-      label: t('navbar.notifications'),
-      icon: Bell,
-      href: `/family-tree/${currentTreeId}/notificationcenter`,
-      action: () => {
-        closeSubmenu();
-      }
-    },
-    {
-      label: t('navbar.settings'),
-      icon: Settings,
-      href: `/family-tree/${currentTreeId}/settings`,
-      action: () => {
-        closeSubmenu();
-      }
-    },
-    {
       label: 'My Trees',
       icon: TreePine,
       href: '/my-trees',
@@ -147,11 +132,7 @@ export default function AdminNavbar() {
   const MobileNavItems = [
     { label: t('navbar.tree_view'), href: `/family-tree/${currentTreeId}` },
     { label: t('navbar.members'), href: `/family-tree/${currentTreeId}/members` },
-    { label: t('navbar.notification_center'), href: `/family-tree/${currentTreeId}/notificationcenter` },
-    { label: t('navbar.export'), action: () => openModal('pdfExportModal') },
     { label: t('navbar.deleted_persons'), href: `/family-tree/${currentTreeId}/deleted-persons` },
-    { label: t('navbar.tree_settings'), href: `/family-tree/${currentTreeId}/settings` },
-    { label: t('navbar.language'), href: '/language' },
   ];
 
   return (
@@ -226,7 +207,7 @@ export default function AdminNavbar() {
         aria-label="Toggle mobile menu"
         style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-primary-text)" }}
       >
-        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {mobileMenuOpen ? <X size={24} color="var(--color-danger)" /> : <Menu size={24} />}
       </button>
 
       {/* Mobile Navigation Drawer */}
@@ -237,12 +218,9 @@ export default function AdminNavbar() {
                 item.action ? (
                   <button
                     key={item.label}
-                    onClick={() => {
-                      item.action();
-                      closeMobileMenu();
-                    }}
+                    onClick={item.action}
                     className="mobile-nav-item"
-                    style={{ background: "none", border: "none", cursor: "pointer" }}
+                    style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
                   >
                     {item.label}
                   </button>
@@ -258,6 +236,96 @@ export default function AdminNavbar() {
                   </NavLink>
                 )
               ))}
+              <NavLink
+                to={`/family-tree/${currentTreeId}/settings`}
+                className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+                onClick={closeMobileMenu}
+              >
+                {t('navbar.tree_settings')}
+              </NavLink>
+              <button
+                onClick={() => {
+                  closeSubmenu();
+                  closeMobileMenu();
+                }}
+                className="mobile-nav-item"
+                style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
+              >
+                {t('navbar.profile')}
+              </button>
+              <button
+                onClick={() => {
+                  closeSubmenu();
+                  closeMobileMenu();
+                  navigate('/my-trees');
+                }}
+                className="mobile-nav-item"
+                style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
+              >
+                My Trees
+              </button>
+
+              {/* Action buttons - First row */}
+              <div style={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "1rem",
+                paddingTop: "1rem",
+                borderTop: "1px solid rgba(0, 0, 0, 0.1)"
+              }}>
+                <Button
+                  onClick={() => {
+                    navigate(`/family-tree/${currentTreeId}/notificationcenter`);
+                    closeMobileMenu();
+                  }}
+                  variant="primary"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <Bell size={20} />
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleLogout();
+                    closeMobileMenu();
+                  }}
+                  variant="danger"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <LogOut size={20} />
+                </Button>
+              </div>
+
+              {/* Action buttons - Second row */}
+              <div style={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "0.5rem"
+              }}>
+                <Button
+                  onClick={() => {
+                    openModal('pdfExportModal');
+                    closeMobileMenu();
+                  }}
+                  variant="info"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <ArrowDownToLine size={20} />
+                </Button>
+                <Button
+                  onClick={() => {
+                    toggleLanguageMenu();
+                    closeMobileMenu();
+                  }}
+                  variant="secondary"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <EarthIcon size={20} />
+                </Button>
+              </div>
           </div>
         </div>,
         document.body

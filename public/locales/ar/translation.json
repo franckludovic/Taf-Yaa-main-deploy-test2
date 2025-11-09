@@ -86,7 +86,11 @@
     "export_settings": "إعدادات التصدير",
     "format": "الصيغة",
     "pdf_document": "مستند PDF",
-    "png_image": "صورة PNG"
+    "png_image": "صورة PNG",
+    "print_export_profile": "تصدير الملف الشخصي",
+    "choose_format_profile": "اختر الصيغة المفضلة لتحميل هذا الملف الشخصي.",
+    "pdf_description": "أفضل للطباعة ومشاركة الوثائق.",
+    "png_description": "صورة عالية الجودة للعرض السهل والتضمين."
   },
 
   "relations": {
@@ -181,6 +185,7 @@
     "download": "تحميل",
     "save": "حفظ",
     "export": "تصدير",
+    "print_export": "تصدير",
     "primary": "الزر الرئيسي",
     "secondary": "ثانوي",
     "loading": "جارٍ التحميل",

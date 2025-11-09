@@ -1,12 +1,11 @@
---add margin on loginscreen(it take the full width of the screen no good for UI)
---reduce the font size for mobile(fontsize resposivelness)
---recude buttons for mobile(too big for mobile)
---reduce drop down for mobile(too large not resposive enough)
---arrange the tree canvas display(reduce legend size, map up by 10px, controls up by 10px)
---arrange mobile nav bar (items to big, and export nav item indented)
+0000000000000000000000000000000000000000000000000000000--add margin on loginscreen(it take the full width of the screen no good for UI) ✓
+--reduce the font size for mobile(fontsize resposivelness) ✓
+--recude buttons for mobile(too big for mobile) ✓
+--reduce drop down for mobile(too large not resposive enough) ✓
+--arrange the tree canvas display(reduce legend size, map up by 10px, controls up by 10px) ✓
+--arrange mobile nav bar (items to big, and export nav item indented,) just make sure all the items in the desctop verison of the nav bar is in the mobile version pleaese like the user drop down or others
 --arranche scroll behavior on managemembers tree (table to big, header to big, controls to large)
 --arrange language nav item on the mobile nav bar (nom it gives 404 page instead open the language modal)
---add user sub dropdown on mobile nav bar
 --arrange notification center on mobile view
 --make the my stories page responsive
 --make the setting page responsive

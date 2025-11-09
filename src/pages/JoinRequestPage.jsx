@@ -69,7 +69,7 @@ const JoinRequestPage = () => {
 
         
         const peopleData = await dataService.getPeopleByTreeId(result.invite.treeId);
-        const allMarriages = await dataService.getAllMarriages();
+        const allMarriages = await dataService.getAllMarriages(result.invite.treeId);
 
        
         const marriagesData = allMarriages.filter(m => {
@@ -251,8 +251,13 @@ const JoinRequestPage = () => {
 
   if (loading) {
     return (
-      <FlexContainer direction="vertical" align="center" justify="center" minHeight="100vh">
-        <Text variant="body1">Loading invitation details...</Text>
+      <FlexContainer justify="center" align="center" padding="20px" style={{ height: '100vh' }}>
+        <div style={{ width: 220, maxWidth: '60vw' }}>
+          <LottieLoader name="generalDataLoader" aspectRatio={1} loop autoplay />
+        </div>
+        <div style={{ marginTop: 12, color: 'var(--color-text-muted)', fontSize: 14 }}>
+          Loading invitation details...
+        </div>
       </FlexContainer>
     );
   }

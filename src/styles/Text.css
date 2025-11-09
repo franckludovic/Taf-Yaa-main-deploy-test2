@@ -24,46 +24,46 @@
 
 /* Variants */
 .text-heading1 {
-  font-size: 32px;
+  font-size: clamp(24px, 5vw, 32px);
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   color: var(--color-primary-text);
 }
 
 .text-heading2 {
-  font-size: 24px;
+  font-size: clamp(18px, 4vw, 24px);
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   color: var(--color-primary-text);
 }
 
 .text-heading3 {
-  font-size: 18px;
+  font-size: clamp(14px, 3vw, 18px);
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   color: var(--color-primary-text);
 }
 
 .text-body1 {
-  font-size: 16px;
+  font-size: clamp(14px, 3vw, 16px);
   font-weight: 400;
   color: var(--color-primary-text);
 }
 
 .text-body2 {
-  font-size: 14px;
+  font-size: clamp(12px, 2.5vw, 14px);
   font-weight: 400;
   color: var(--color-primary-text);
 }
 
 .text-caption1 {
-  font-size: 12px;
+  font-size: clamp(10px, 2vw, 12px);
   font-weight: 400;
   color: var(--color-secondary-text);
 }
 
 .text-caption2 {
-  font-size: 8px;
+  font-size: clamp(8px, 1.5vw, 10px);
   font-weight: 400;
   color: var(--color-tertiary-text);
 }

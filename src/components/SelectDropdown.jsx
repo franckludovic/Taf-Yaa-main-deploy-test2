@@ -20,10 +20,10 @@ function SelectDropdown({ label, options = [], value, onChange, placeholder, sty
   const customStyles = {
     control: (base, state) => ({
       ...base,
-      padding: "4px 4px",
+      padding: "clamp(4px, 1vw, 8px) clamp(4px, 1vw, 8px)",
       border: `2px solid ${state.isFocused ? "var(--color-primary)" : "var(--color-gray-light)"}`,
       borderRadius: "12px",
-      fontSize: "1rem",
+      fontSize: "clamp(0.9rem, 2.5vw, 1rem)",
       background: "var(--color-white)",
       color: "var(--color-text-primary)",
       fontFamily: "inherit",

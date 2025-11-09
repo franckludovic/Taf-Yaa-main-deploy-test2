@@ -71,7 +71,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url('/Images/background tree.png')" }}>
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center px-4 py-8" style={{ backgroundImage: "url('/Images/background tree.png')" }}>
       <div className="absolute inset-0"></div>
       <Toast />
       <div style={{
@@ -83,7 +83,7 @@ export default function LoginPage() {
         border: '2px solid rgba(255, 255, 255, 0.25)',
 
       }}
-        className="relative z-10 w-full max-w-md p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-2xl"
+        className="relative z-10 w-full max-w-md p-8 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg shadow-2xl mx-4"
       >
         <div className="text-center mb-8">
           <img src="/Images/Logo.png" alt="Logo" className="mx-auto h-20 w-auto mb-2" />

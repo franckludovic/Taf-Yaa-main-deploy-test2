@@ -1,5 +1,5 @@
 // src/components/tree/TreeCanvas.jsx
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import ReactFlow, {
   Background,
   MiniMap,
@@ -39,6 +39,8 @@ import usePersonMenuStore from "../../store/usePersonMenuStore";
 import useSidebarStore from "../../store/useSidebarStore";
 import useModalStore from "../../store/useModalStore";
 import dataService from "../../services/dataService";
+import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
 
 // -- React Flow `config --
 const nodeTypes = {
@@ -100,6 +102,9 @@ function TreeCanvasComponent({ treeId, _lottieData }) {
   const { closeMenu } = usePersonMenuStore((state) => state.actions);
   const openProfileSidebar = useSidebarStore((state) => state.openSidebar);
   const { openModal } = useModalStore();
+
+  // Ref to the ReactFlow container for export
+  const treeContainerRef = useRef(null);
 
   // - State -
   const [peopleWithCollapseState, setPeopleWithCollapseState] =
@@ -312,6 +317,7 @@ useEffect(() => {
 
   return (
     <div
+      ref={treeContainerRef}
       style={{ height: "100%", width: "100%" }}
       onMouseDown={clearHighlight}
     >
@@ -382,6 +388,83 @@ useEffect(() => {
         <CustomControls
           handleResetView={handleResetView}
           handleToggleOrientation={handleToggleOrientation}
+          handleCaptureView={async () => {
+            // Capture the current view and open the export modal
+            const { openModal } = useModalStore.getState();
+
+            try {
+              console.log("Starting capture in TreeCanvas...");
+              console.log("treeContainerRef.current:", treeContainerRef.current);
+
+              if (!treeContainerRef.current) {
+                console.error("Tree container ref not available!");
+                return;
+              }
+
+              // Capture current view
+              const dataUrl = await toPng(treeContainerRef.current, {
+                backgroundColor: '#ffffff',
+                width: treeContainerRef.current.offsetWidth,
+                height: treeContainerRef.current.offsetHeight,
+              });
+
+              console.log("Capture successful, dataUrl length:", dataUrl.length);
+
+              openModal("pdfExportModal", {
+                svgRef: null, // No direct SVG ref for ReactFlow
+                containerRef: treeContainerRef, // The container div
+                capturedDataUrl: dataUrl,
+                scopeOptions: 'currentView',
+                fitView: fitView // Pass fitView function for complete view
+              });
+            } catch (error) {
+              console.error("Error capturing tree:", error);
+              // Open modal anyway with null dataUrl
+              openModal("pdfExportModal", {
+                svgRef: null,
+                containerRef: treeContainerRef,
+                capturedDataUrl: null,
+                scopeOptions: 'currentView',
+                fitView: fitView
+              });
+            }
+          }}
+          handleQuickCapture={async () => {
+            // Quick capture: directly capture current view and download as PDF
+            try {
+              console.log("Starting quick capture...");
+
+              if (!treeContainerRef.current) {
+                console.error("Tree container ref not available!");
+                return;
+              }
+
+              // Capture current view
+              const dataUrl = await toPng(treeContainerRef.current, {
+                backgroundColor: '#ffffff',
+                width: treeContainerRef.current.offsetWidth,
+                height: treeContainerRef.current.offsetHeight,
+              });
+
+              console.log("Quick capture successful, downloading PDF...");
+
+              // Directly download as PDF (current view, PDF format)
+              const img = new window.Image();
+              img.src = dataUrl;
+              img.onload = () => {
+                const pdf = new jsPDF({
+                  orientation: img.width > img.height ? 'landscape' : 'portrait',
+                  unit: 'px',
+                  format: [img.width, img.height]
+                });
+                pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height);
+                pdf.save("family_tree.pdf");
+              };
+
+            } catch (error) {
+              console.error("Error in quick capture:", error);
+            }
+          }}
         />
         <Legend />
         <CustomMarkers />

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import Row from '../../layout/containers/Row';
 import ImageCard from '../../layout/containers/ImageCard';
 import Text from '../Text';
+import Button from '../Button';
 import { useTranslation } from "react-i18next";
 import Submenu from '../Submenu';
 import {
@@ -105,8 +106,7 @@ export default function MyTreeNavBar() {
     { label: 'My Trees', href: '/my-trees' },
     { label: 'My Stories', href: '/my-stories' },
     { label: 'Discover', href: '/discover' },
-    { label: t('navbar.settings'), href: '/settings' },
-    { label: t('navbar.language'), href: '/language' },
+    { label: t('navbar.language'), href: '#', action: () => { toggleLanguageMenu(); closeMobileMenu(); } },
   ];
 
   return (
@@ -169,7 +169,7 @@ export default function MyTreeNavBar() {
         aria-label="Toggle mobile menu"
         style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-primary-text)" }}
       >
-        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {mobileMenuOpen ? <X size={24} color="var(--color-danger)" /> : <Menu size={24} />}
       </button>
 
       {/* Mobile Navigation Drawer */}
@@ -177,25 +177,64 @@ export default function MyTreeNavBar() {
         <div className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-nav-content">
               {MobileNavItems.map((item) => (
-                <NavLink
-                  key={item.label}
-                  to={item.href}
-                  className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  {item.label}
-                </NavLink>
+                item.action ? (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className="mobile-nav-item"
+                    style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left" }}
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <NavLink
+                    key={item.label}
+                    to={item.href}
+                    className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.label}
+                  </NavLink>
+                )
               ))}
-              <button
-                onClick={() => {
-                  handleLogout();
-                  closeMobileMenu();
-                }}
+              <NavLink
+                to="/settings"
                 className="mobile-nav-item"
-                style={{ background: "none", border: "none", cursor: "pointer" }}
+                onClick={closeMobileMenu}
               >
-                {t('navbar.log_out')}
-              </button>
+                {t('navbar.settings')}
+              </NavLink>
+              {/* Action buttons row at the bottom */}
+              <div style={{
+                display: "flex",
+                gap: "0.5rem",
+                marginTop: "1rem",
+                paddingTop: "1rem",
+                borderTop: "1px solid rgba(0, 0, 0, 0.1)"
+              }}>
+                <Button
+                  onClick={() => {
+                    closeSubmenu();
+                    closeMobileMenu();
+                  }}
+                  variant="primary"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <Bell size={20} />
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleLogout();
+                    closeMobileMenu();
+                  }}
+                  variant="danger"
+                  fullWidth
+                  style={{ flex: 1 }}
+                >
+                  <LogOut size={20} />
+                </Button>
+              </div>
           </div>
         </div>,
         document.body

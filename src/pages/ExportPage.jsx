@@ -1,7 +1,9 @@
-import React, { useRef } from "react";
+import React, { useState, useRef } from "react";
 import ExportFamilyTree from "../components/PdfExport";
+import Button from "../components/Button";
 
 export default function ExportPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const svgRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -16,7 +18,8 @@ export default function ExportPage() {
           border: "1px solid #ccc",
           padding: "20px",
           display: "inline-block",
-          marginBottom: "20px"
+          marginBottom: "20px",
+          backgroundColor: "#fff"
         }}
       >
         <svg ref={svgRef} width="300" height="200">
@@ -27,11 +30,14 @@ export default function ExportPage() {
         </svg>
       </div>
 
-      {/* Export UI */}
+      {/* Button to open export modal */}
+      <Button onClick={() => setIsModalOpen(true)}>Export Family Tree</Button>
+
+      {/* Export Modal */}
       <ExportFamilyTree
-        svgRef={svgRef}
-        containerRef={containerRef}
-        rootName="Chief Adebayo"
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        treeRef={containerRef}
       />
     </div>
   );

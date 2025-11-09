@@ -74,7 +74,12 @@ const useModalStore = create((set) => ({
       onConfirm: null,
       onCancel: null,
     },
-    pdfExportModal: false,
+    pdfExportModal: {
+      svgRef: null,
+      containerRef: null,
+      capturedDataUrl: null,
+      scopeOptions: 'currentView'
+    },
     infoModal: {
       title: '',
       message: '',
@@ -106,6 +111,11 @@ const useModalStore = create((set) => ({
   // Close a specific modal
   closeModal: (modalName) => set((state) => ({
     modals: { ...state.modals, [modalName]: false }
+  })),
+
+  // Update modal data
+  updateModalData: (modalName, data) => set((state) => ({
+    modalData: { ...state.modalData, [modalName]: { ...state.modalData[modalName], ...data } }
   })),
 
   // Toggle a specific modal
