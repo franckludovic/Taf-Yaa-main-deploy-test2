@@ -16,6 +16,16 @@ export default function EmailVerificationPage() {
   useEffect(() => {
     // Check if user is already verified
     if (isCurrentUserEmailVerified()) {
+      // Check if there's a pending join invite to resume
+      const pendingInvite = sessionStorage.getItem('pendingJoinInvite');
+      const redirectToJoin = sessionStorage.getItem('redirectToJoinAfterVerification');
+      if (pendingInvite && redirectToJoin) {
+        const inviteData = JSON.parse(pendingInvite);
+        sessionStorage.removeItem('pendingJoinInvite');
+        sessionStorage.removeItem('redirectToJoinAfterVerification');
+        navigate(`/join-request?inviteId=${inviteData.inviteId}&code=${inviteData.code}`);
+        return;
+      }
       navigate('/my-trees');
     }
   }, [isCurrentUserEmailVerified, navigate]);
@@ -39,12 +49,22 @@ export default function EmailVerificationPage() {
       // Force refresh the user to check verification status
       await currentUser.reload();
       if (isCurrentUserEmailVerified()) {
+        // Check if there's a pending join invite to resume
+        const pendingInvite = sessionStorage.getItem('pendingJoinInvite');
+        const redirectToJoin = sessionStorage.getItem('redirectToJoinAfterVerification');
+        if (pendingInvite && redirectToJoin) {
+          const inviteData = JSON.parse(pendingInvite);
+          sessionStorage.removeItem('pendingJoinInvite');
+          sessionStorage.removeItem('redirectToJoinAfterVerification');
+          navigate(`/join-request?inviteId=${inviteData.inviteId}&code=${inviteData.code}`);
+          return;
+        }
         navigate('/my-trees');
       } else {
         setResendMessage('Email not yet verified. Please check your inbox and click the verification link.');
       }
-    } catch (error) {
-      console.error('Error checking verification:', error);
+    } catch (err) {
+      console.error('Error checking verification:', err);
       setResendMessage('Error checking verification status. Please try again.');
     } finally {
       setCheckingVerification(false);

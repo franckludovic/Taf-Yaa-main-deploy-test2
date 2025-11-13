@@ -108,8 +108,8 @@ exports.handler = async (event, context) => {
         },
         tree: {
           id: treeDoc.id,
-          name: tree.name,
-          description: tree.description,
+          familyName: tree.familyName,
+          familyDescription: tree.familyDescription,
           createdBy: tree.createdBy,
         },
       }),

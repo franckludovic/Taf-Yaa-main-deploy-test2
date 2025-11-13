@@ -12,7 +12,7 @@ const useModalStore = create((set) => ({
     addParentModal: false,
     treeModal: false,
     confirmationModal: false,
-    editPerson: false,  // Added editPerson modal
+    editPerson: false,  
     editMember: false,
     editMemberRole: false,
     banMemberModal: false,

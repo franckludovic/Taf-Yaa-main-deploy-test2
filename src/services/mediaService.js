@@ -80,10 +80,10 @@ export const mediaService = {
 
   async uploadAttachment(file, treeId, personId, userId, _options = {}) {
     try {
-      // Validate that file is image, audio, or video
-      const validTypes = ['image/', 'audio/', 'video/'];
-      if (!validTypes.some(type => file.type.startsWith(type))) {
-        throw new Error('uploadAttachment only accepts image, audio, or video files');
+      // Validate that file is image, audio, video, or PDF
+      const validTypes = ['image/', 'audio/', 'video/', 'application/pdf'];
+      if (!validTypes.some(type => file.type.startsWith(type) || file.type === 'application/pdf')) {
+        throw new Error('uploadAttachment only accepts image, audio, video, or PDF files');
       }
 
       // Upload file directly to Cloudinary using signature
@@ -97,6 +97,8 @@ export const mediaService = {
         } else {
           type = 'video';
         }
+      } else if (uploadResult.resource_type === 'raw' && uploadResult.format === 'pdf') {
+        type = 'pdf';
       }
 
       // Return attachment object

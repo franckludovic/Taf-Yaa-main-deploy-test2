@@ -58,6 +58,10 @@ const MembersPage = () => {
 
 
 
+  const handleEditPerson = (personId) => {
+    openModal('editPerson', { personId });
+  };
+
   const handleDeletePerson = (person) => {
     openModal('deletePerson', { person, onDeleteComplete: reload });
   };
@@ -204,7 +208,7 @@ const MembersPage = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'people':
-        return <ManagePeopleTab people={people} onEdit={() => {}} onDelete={handleDeletePerson} onViewRelationships={handleViewRelationships} onGrantMembership={handleGrantMembership} canManageRoles={canManageRoles} />;
+        return <ManagePeopleTab people={people} onEdit={handleEditPerson} onDelete={handleDeletePerson} onViewRelationships={handleViewRelationships} onGrantMembership={handleGrantMembership} canManageRoles={canManageRoles} />;
       case 'members':
         return <ManageMembersTab members={members} canManageRoles={canManageRoles} onInviteMember={handleInviteMember} onNavigateToInvitePage={handleNavigateToInvitePage} onRevokeMember={handleRevokeMember} onEditMemberRole={handleEditMemberRole} onToggleBan={handleToggleBan} treeId={treeId} openModal={openModal} />;
       default:

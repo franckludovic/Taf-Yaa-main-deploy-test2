@@ -40,9 +40,9 @@ const Row = ({
           <div
             style={{
               flex: fitContent
-                ? '0 1 auto' // ✅ allow shrink even in fitContent
+                ? '0 1 auto' 
                 : (hasFixedWidth ? '0 0 auto' : '1 1 0'),
-              minWidth: 0, // ✅ allow ellipsis/shrinking
+              minWidth: 0, 
               display: 'flex',
               justifyContent: fitContent ? fitContentJustifyContent : justifyContent, 
               alignItems: fitContent ? fitContentAlignItems : 'center',     

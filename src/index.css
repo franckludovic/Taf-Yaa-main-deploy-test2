@@ -68,6 +68,18 @@ h1 {
   line-height: 1.1;
 }
 
+.card-scroll-horizontal::-webkit-scrollbar,
+.card-scroll-vertical::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.card-scroll-horizontal::-webkit-scrollbar-thumb,
+.card-scroll-vertical::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

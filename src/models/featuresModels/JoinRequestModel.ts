@@ -26,7 +26,7 @@ export interface JoinRequest {
         type: "image" | "video" | "audio" | "pdf" | "doc";
         name?: string;
         size?: number;
-        duration?: number; 
+        duration?: number;
         caption?: string;
     }[];
 
@@ -62,7 +62,7 @@ export function createJoinRequest({
         type: "image" | "video" | "audio" | "pdf" | "doc";
         name?: string;
         size?: number;
-        duration?: number; 
+        duration?: number;
         caption?: string;
     }[];
 }): JoinRequest {

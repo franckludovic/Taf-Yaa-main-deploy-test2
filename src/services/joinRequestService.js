@@ -46,22 +46,6 @@ export async function submitJoinRequest({
   // Save to Firestore
   const joinRequestRef = doc(collection(db, 'joinRequests'), joinRequest.JoinRequestId);
   await setDoc(joinRequestRef, joinRequest);
-
-  // Increment usesCount on invite
-  const inviteRef = doc(collection(db, 'invites'), inviteId);
-  await runTransaction(db, async (transaction) => {
-    const inviteDoc = await transaction.get(inviteRef);
-    if (!inviteDoc.exists) throw new Error('Invite not found');
-
-    const invite = inviteDoc.data();
-    const newUsesCount = (invite.usesCount || 0) + 1;
-    transaction.update(inviteRef, { usesCount: newUsesCount });
-
-    if (newUsesCount >= invite.usesAllowed) {
-      transaction.update(inviteRef, { status: 'used' });
-    }
-  });
-
   return joinRequest;
 }
 

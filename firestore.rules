@@ -19,7 +19,8 @@ service cloud.firestore {
     function isTreeMember(treeId) {
       return isSignedIn()
         && treeExists(treeId)
-        && request.auth.uid in treeRef(treeId).data.memberUIDs;
+        && (request.auth.uid in treeRef(treeId).data.memberUIDs ||
+            getMemberRole(treeId) != null);
     }
 
     function isTreePublic(treeId) {
@@ -27,10 +28,11 @@ service cloud.firestore {
         && treeRef(treeId).data.settings.privacy.isPublic == true;
     }
 
-function getMemberRole(treeId) {
-  let roles = treeRef(treeId).data.roles;
-  return roles != null ? roles[request.auth.uid] : null;
-}
+    function getMemberRole(treeId) {
+      let roles = treeRef(treeId).data.roles;
+      return roles != null ? roles[request.auth.uid] : null;
+    }
+
     function isTreeAdminOrModerator(treeId) {
       let role = getMemberRole(treeId);
       return role == 'admin' || role == 'moderator';
@@ -51,14 +53,14 @@ function getMemberRole(treeId) {
     //---------- TREES ----------//
 
 		match /trees/{treeId} {
-  allow list: if isSignedIn();
-  allow get: if isSignedIn() && (
-    request.auth.uid in resource.data.memberUIDs ||
-    resource.data.settings.privacy.isPublic == true
-  );
-  allow create: if isSignedIn();
-  allow update, delete: if isSignedIn() && isTreeAdminOrModerator(treeId);
-	}
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && (
+        request.auth.uid in resource.data.memberUIDs ||
+        resource.data.settings.privacy.isPublic == true
+      );
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && isTreeAdminOrModerator(treeId);
+	  }
 
     //---------- PEOPLE ----------//
 
@@ -68,7 +70,7 @@ function getMemberRole(treeId) {
       allow create: if isSignedIn() && isTreeEditorOrAbove(request.resource.data.treeId);
       allow update, delete: if isSignedIn() &&
         isTreeEditorOrAbove(resource.data.treeId);
-      allow list: if isSignedIn(); 
+      allow list: if isSignedIn();
     }
 
     //---------- MARRIAGES ----------//
@@ -96,25 +98,25 @@ function getMemberRole(treeId) {
     //---------- STORIES ----------//
 
 		match /stories/{storyId} {
-  allow read: if isSignedIn() && (
-    request.auth.uid == resource.data.createdBy ||
-    (resource.data.contributors != null && request.auth.uid in resource.data.contributors) ||
-    isTreeMember(resource.data.treeId) ||
-    isTreePublic(resource.data.treeId)
-  );
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.createdBy ||
+        (resource.data.contributors != null && request.auth.uid in resource.data.contributors) ||
+        isTreeMember(resource.data.treeId) ||
+        isTreePublic(resource.data.treeId)
+      );
 
 
-  allow create: if isSignedIn() &&
-    (request.auth.uid == request.resource.data.createdBy ||
-     isTreeEditorOrAbove(request.resource.data.treeId));
+      allow create: if isSignedIn() &&
+        (request.auth.uid == request.resource.data.createdBy ||
+         isTreeEditorOrAbove(request.resource.data.treeId));
 
 
-  allow update, delete: if isSignedIn() &&
-    (request.auth.uid == resource.data.createdBy ||
-     isTreeEditorOrAbove(resource.data.treeId));
+      allow update, delete: if isSignedIn() &&
+        (request.auth.uid == resource.data.createdBy ||
+         isTreeEditorOrAbove(resource.data.treeId));
 
-  allow list: if isSignedIn();
-}
+      allow list: if isSignedIn();
+    }
 
     //---------- MEDIA ----------//
 
@@ -128,9 +130,14 @@ function getMemberRole(treeId) {
     }
 
     //---------- INVITES ----------//
-
-    match /invites/{inviteId} {
-      allow read, write: if isSignedIn() &&
+		match /invites/{inviteId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.createdBy ||
+         isTreeEditorOrAbove(resource.data.treeId));
+      allow create: if isSignedIn() &&
+        (request.auth.uid == request.resource.data.createdBy ||
+         isTreeEditorOrAbove(request.resource.data.treeId));
+      allow update, delete: if isSignedIn() &&
         (request.auth.uid == resource.data.createdBy ||
          isTreeEditorOrAbove(resource.data.treeId));
     }
@@ -138,14 +145,31 @@ function getMemberRole(treeId) {
     //---------- JOIN REQUESTS ----------//
 
     match /joinRequests/{joinRequestId} {
-      allow read, write: if isSignedIn() &&
-        (
-          (request.resource != null 
-             ? isTreeAdminOrModerator(request.resource.data.treeId) 
-             : isTreeAdminOrModerator(resource.data.treeId)
-          ) ||
-          request.auth.uid == (request.resource != null ? request.resource.data.requestedBy : resource.data.requestedBy)
+      // Allow reading a single join request (direct get)
+      allow get: if isSignedIn() && (
+        isTreeAdminOrModerator(resource.data.treeId) ||
+        request.auth.uid == resource.data.submittedBy
+      );
+
+      // Allow querying all join requests for a tree
+      allow list: if isSignedIn()
+        && request.query.where.size() >= 1
+        && request.query.where[0][0] == 'treeId'
+        && request.query.where[0][1] == '=='
+        && (
+          isTreeAdminOrModerator(request.query.where[0][2]) ||
+          request.auth.uid == treeRef(request.query.where[0][2]).data.createdBy
         );
+
+      // Create join request (any signed-in user)
+      allow create: if isSignedIn();
+
+      // Update (approve/reject) only if admin/moderator of the tree
+      allow update: if isSignedIn() && isTreeAdminOrModerator(resource.data.treeId);
+
+      // Delete (optional)
+      allow delete: if isSignedIn() && isTreeAdminOrModerator(resource.data.treeId);
     }
-  }
+
+  } 
 }

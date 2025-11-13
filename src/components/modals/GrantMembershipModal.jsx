@@ -93,11 +93,14 @@ const GrantMembershipModal = ({ isOpen, onClose, person, treeId, treeName, onMem
       });
 
       let emailData;
+      let responseText = '';
       try {
-        const responseText = await emailResponse.text();
+        responseText = await emailResponse.text();
+        console.log('Email response text:', responseText); // Debug log
         emailData = JSON.parse(responseText);
-      } catch {
-        emailData = { error: 'Failed to parse response' };
+      } catch (parseError) {
+        console.error('Failed to parse email response:', parseError, 'Response text:', responseText);
+        emailData = { error: 'Failed to parse response', details: responseText };
       }
 
       if (!emailResponse.ok) {
@@ -140,9 +143,8 @@ Best regards,
 ${currentUser.displayName || 'The Tree Admin'}`;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxHeight="90vh">
+    <Modal title="Grant Membership" isOpen={isOpen} onClose={onClose} maxHeight="90vh">
       <Column margin='25px 0px 0px 0px' padding='0px' gap='1rem'>
-        <Text as="h2" variant="h3" bold>Grant Membership</Text>
         <Text variant="caption" color="gray-dark">
           Grant membership to <strong>{person.name}</strong> by sending them an invitation email.
         </Text>
@@ -150,7 +152,7 @@ ${currentUser.displayName || 'The Tree Admin'}`;
         <Column gap='1rem'>
           {/* Role Selection */}
           <Card backgroundColor='var(--color-transparent)' borderColor='var(--color-gray-light)' padding='1rem'>
-            <Row align="center" gap="10px" margin="0px 0px 10px 0px">
+            <Row fitContent justifyContent="flex-start" gap="10px" margin="0px 0px 10px 0px">
               <Users size={20} color="var(--color-primary)" />
               <Text variant="body1" bold>Role</Text>
             </Row>
@@ -164,7 +166,7 @@ ${currentUser.displayName || 'The Tree Admin'}`;
 
           {/* Email Info */}
           <Card backgroundColor='var(--color-transparent)' borderColor='var(--color-gray-light)' padding='1rem'>
-            <Row align="center" gap="10px" margin="0px 0px 10px 0px">
+            <Row fitContent justifyContent="flex-start" gap="10px" margin="0px 0px 10px 0px">
               <Mail size={20} color="var(--color-primary)" />
               <Text variant="body1" bold>Email</Text>
             </Row>
@@ -180,7 +182,7 @@ ${currentUser.displayName || 'The Tree Admin'}`;
 
           {/* Optional Message */}
           <Card backgroundColor='var(--color-transparent)' borderColor='var(--color-gray-light)' padding='1rem'>
-            <Row align="center" gap="10px" margin="0px 0px 10px 0px">
+            <Row fitContent justifyContent="flex-start" gap="10px" margin="0px 0px 10px 0px">
               <Mail size={20} color="var(--color-primary)" />
               <Text variant="body1" bold>Message (Optional)</Text>
             </Row>
@@ -194,7 +196,7 @@ ${currentUser.displayName || 'The Tree Admin'}`;
 
           {/* Email Preview */}
           <Card backgroundColor='var(--color-transparent)' borderColor='var(--color-gray-light)' padding='1rem'>
-            <Row align="center" gap="10px" margin="0px 0px 10px 0px">
+            <Row fitContent justifyContent="flex-start" gap="10px" margin="0px 0px 10px 0px">
               <Eye size={20} color="var(--color-primary)" />
               <Text variant="body1" bold>Email Preview</Text>
               <Button

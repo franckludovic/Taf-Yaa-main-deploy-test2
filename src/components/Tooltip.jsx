@@ -19,7 +19,7 @@ const Tooltip = ({ children, content }) => {
           <div
             style={{
               position: 'absolute',
-              top: tooltipRef.current?.getBoundingClientRect().top - 40,
+              top: tooltipRef.current?.getBoundingClientRect().top - 10,
               left: tooltipRef.current?.getBoundingClientRect().left +
                 tooltipRef.current?.offsetWidth / 2,
               transform: 'translate(-50%, -100%)',

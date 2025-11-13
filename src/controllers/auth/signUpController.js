@@ -19,6 +19,13 @@ export async function handleSignUp(formData, navigate, onError, setLoading) {
       language: formData.language,
     });
 
+    // Check if there's a pending join invite to resume after verification
+    const pendingInvite = sessionStorage.getItem('pendingJoinInvite');
+    if (pendingInvite) {
+      // Store flag to indicate we need to redirect to join after verification
+      sessionStorage.setItem('redirectToJoinAfterVerification', 'true');
+    }
+
     // Navigate to email verification
     navigate('/verify-email');
 

@@ -1,5 +1,5 @@
 // src/pages/BaseLayout.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import PageFrame from '../layout/containers/PageFrame';
 import ProfileSidebar from '../components/sidebar/ProfileSidebar';
@@ -17,20 +17,23 @@ export default function BaseLayout() {
   const closeSidebar = useSidebarStore((state) => state.closeSidebar);
   const location = useLocation();
 
-  
+  // Close sidebar when navigating to a different page
+  useEffect(() => {
+    closeSidebar();
+  }, [location.pathname, closeSidebar]);
+
   const isMyStoriesPage = location.pathname === '/my-stories';
   const navbar = isMyStoriesPage ? <MyTreeNavBar /> : <AdminNavbar />;
 
-  
   const getSidebarContentType = () => {
-    
+
     if (location.pathname.includes('/invites')) {
       return 'invite';
     }
     return 'peopleprofile'; // Default
   };
 
-  
+
   const activeInvite = useSidebarStore((state) => state.activeInvite);
 
   const getSidebarProps = () => {

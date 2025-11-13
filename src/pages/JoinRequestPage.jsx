@@ -15,6 +15,7 @@ import { validateInviteCode } from '../services/inviteService';
 import dataService from '../services/dataService';
 import useToastStore from '../store/useToastStore';
 import { useAuth } from '../context/AuthContext';
+import LottieLoader from '../components/LottieLoader.jsx';
 import { getDirectLinePeople, getSpouseOptions } from '../utils/treeUtils/treeLayout';
 import { CheckCircle, Upload, User, Users, FileText, Plus, X } from 'lucide-react';
 import { ImageAttachmentCard, VideoAttachmentCard, AudioAttachmentCard } from '../components/AttachmentCard.jsx';
@@ -277,7 +278,6 @@ const JoinRequestPage = () => {
   const genderOptions = [
     { value: 'male', label: 'Male' },
     { value: 'female', label: 'Female' },
-    { value: 'other', label: 'Other' }
   ];
 
   return (

@@ -39,10 +39,10 @@ export async function handler(event) {
     // Construct the message
     const mailOptions = {
       from: `Taf'yaa <${process.env.SMTP_USER}>`,
-      to: recipientEmail,
+      to:   ``,
       subject: `🌳 You're invited to join the "${treeName || 'Family Tree'}" family on Taf'yaa!`,
       html: `
-        <div style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; padding: 15px;">
+        <div style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; padding: 5px;">
           <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
             <p style="text-align: center; margin-bottom: 30px;">
               <h1 style="color: #f9a406; margin: 0; font-size: 28px;">Welcome to Taf'yaa!</h1>
@@ -74,11 +74,6 @@ export async function handler(event) {
               <a href="${joinLink}" style="display: inline-block; background: linear-gradient(135deg, #f9a406 0%, #e85d04 100%); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 4px 8px rgba(249, 160, 6, 0.3);">
                 Accept Your Invitation
               </a>
-            </div>
-
-            <div style="text-align: center; margin: 25px 0;">
-              <p style="color: #6c757d; margin-bottom: 15px;">Or scan this QR code with your phone:</p>
-              <img src="${qrCodeDataURL}" alt="QR Code to join family tree" style="max-width: 200px; height: auto; border: 2px solid #f9a406; border-radius: 8px;" />
             </div>
 
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px;">

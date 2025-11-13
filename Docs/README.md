@@ -16,4 +16,4 @@ to start the project first move to the project directory and type
 
 'npm install' to install the node module (this will be done once)
 
- then run the project by typing 'npm run dev' in the terminal
+ then run the project by typing 'npm run dev' in the terminal 

@@ -40,7 +40,6 @@ import useSidebarStore from "../../store/useSidebarStore";
 import useModalStore from "../../store/useModalStore";
 import dataService from "../../services/dataService";
 import { toPng } from 'html-to-image';
-import jsPDF from 'jspdf';
 
 // -- React Flow `config --
 const nodeTypes = {
@@ -333,7 +332,7 @@ useEffect(() => {
           setTargetNodeId(personId);
           const person = allPeople.find((p) => p.id === personId);
           if (person) setPartnerName(person.name);
-          openModal("addSpouseModal", { targetNodeId: personId, treeId, partnerName: person?.name, onSuccess: () => { reload(); setTargetNodeId(null); setViewRootId(personId); setIsManualRoot(true); } });
+          openModal("addSpouseModal", { targetNodeId: personId, treeId, partnerName: person?.name, onSuccess: () => { reload(); setTargetNodeId(null); } });
         }}
         onAddChild={(personId) => {
           setTargetNodeId(personId);
@@ -415,7 +414,8 @@ useEffect(() => {
                 containerRef: treeContainerRef, // The container div
                 capturedDataUrl: dataUrl,
                 scopeOptions: 'currentView',
-                fitView: fitView // Pass fitView function for complete view
+                fitView: fitView, // Pass fitView function for complete view
+                treeData: treeData // Pass tree data for family name
               });
             } catch (error) {
               console.error("Error capturing tree:", error);
@@ -425,12 +425,13 @@ useEffect(() => {
                 containerRef: treeContainerRef,
                 capturedDataUrl: null,
                 scopeOptions: 'currentView',
-                fitView: fitView
+                fitView: fitView,
+                treeData: treeData // Pass tree data for family name
               });
             }
           }}
           handleQuickCapture={async () => {
-            // Quick capture: directly capture current view and download as PDF
+            // Quick capture: directly capture current view and download as PNG
             try {
               console.log("Starting quick capture...");
 
@@ -446,20 +447,14 @@ useEffect(() => {
                 height: treeContainerRef.current.offsetHeight,
               });
 
-              console.log("Quick capture successful, downloading PDF...");
+              console.log("Quick capture successful, downloading PNG...");
 
-              // Directly download as PDF (current view, PDF format)
-              const img = new window.Image();
-              img.src = dataUrl;
-              img.onload = () => {
-                const pdf = new jsPDF({
-                  orientation: img.width > img.height ? 'landscape' : 'portrait',
-                  unit: 'px',
-                  format: [img.width, img.height]
-                });
-                pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height);
-                pdf.save("family_tree.pdf");
-              };
+              // Create download link for PNG with family name
+              const familyName = treeData?.familyName || 'family_tree';
+              const link = document.createElement('a');
+              link.download = `${familyName}.png`;
+              link.href = dataUrl;
+              link.click();
 
             } catch (error) {
               console.error("Error in quick capture:", error);

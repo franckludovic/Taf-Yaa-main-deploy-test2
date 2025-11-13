@@ -11,14 +11,14 @@ export default function ContactMetaInfo({ contact }) {
       <Text align='left' variant='heading3' >Contact & Meta Info</Text>
       <Spacer size='md' />
       <Divider color="var(--color-gray)" thickness='2px' borderRadius='3px' />
-      <Row padding='0px'>
+      <Row padding='0px' maxWidth='100%' style={{ overflow: 'hidden' }}>
         <Card alignItems='start' padding='0px' margin='0px 0px' backgroundColor='var(--color-transparent)'>
           <Text align='top' variant='caption1' color='tertiary-text'>Phone number</Text>
           <Text variant='caption1' color='secondary'>{contact.phoneNumber}</Text>
         </Card>
-        <Card alignItems='start' padding='0px' margin='0px 0px' backgroundColor='var(--color-transparent)'>
+        <Card  alignItems='start' padding='0px' margin='0px 0px' backgroundColor='var(--color-transparent)' maxWidth='100%'>
           <Text align='flex-left' variant='caption1' color='tertiary-text'>Email</Text>
-          <Text variant='caption1' color='secondary'>{contact.email}</Text>
+          <Text variant='caption1' color='secondary' ellipsis>{contact.email}</Text>
         </Card>
       </Row>
       <Divider color="var(--color-gray)" thickness='2px' borderRadius='3px' style={{ margin: '15px 0' }} />

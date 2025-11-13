@@ -58,11 +58,11 @@
 
 /* Custom scrollbar for language list */
 .submenu-container.language-menu .submenu-body::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
 }
 
 .submenu-container.language-menu .submenu-body::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-gray);
 }
 
 .submenu-container.language-menu .submenu-body::-webkit-scrollbar-thumb {
@@ -71,7 +71,7 @@
 }
 
 .submenu-container.language-menu .submenu-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(22, 163, 74, 0.5);
+  background: var(--color-primary2)
 }
 
 /* Profile Submenu Specific Styles */

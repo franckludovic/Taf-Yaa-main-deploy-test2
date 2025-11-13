@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useOutletContext } from 'react-router-dom';
 import FlexContainer from '../layout/containers/FlexContainer';
 import Text from '../components/Text';
 import Card from '../layout/containers/Card';
 import Column from '../layout/containers/Column';
-import { getJoinRequestsForTree, reviewJoinRequest } from '../services/joinRequestService';
+import { getJoinRequestsForTree } from '../services/joinRequestService';
 import useToastStore from '../store/useToastStore';
 import { useAuth } from '../context/AuthContext';
 import JoinRequestCard from '../components/PendingRequestCard';
-import useModalStore from '../store/useModalStore';
 import { Clock } from 'lucide-react';
+import { formatArrivalTime } from '../utils/featuresUtils/formatArrivalTime';
 
 const PendingRequestsPage = () => {
   const { treeId } = useParams();
   const { currentUser } = useAuth();
   const addToast = useToastStore(state => state.addToast);
-  const { openModal } = useModalStore();
+  const { onNotificationClick } = useOutletContext();
 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,33 +41,20 @@ const PendingRequestsPage = () => {
     }
   };
 
-  const handleApprove = async (request) => {
-    try {
-      const { acceptJoinRequest } = await import('../services/joinRequestService');
-      await acceptJoinRequest(request.JoinRequestId, currentUser.uid);
-      addToast('Join request approved successfully', 'success');
-      loadPendingRequests();
-    } catch (error) {
-      console.error('Error approving request:', error);
-      addToast('Failed to approve join request', 'error');
-    }
-  };
 
-  const handleDecline = async (request) => {
-    try {
-      await reviewJoinRequest(request.JoinRequestId, 'rejected', currentUser.uid);
-      addToast('Join request rejected', 'success');
-      loadPendingRequests();
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-      addToast('Failed to reject join request', 'error');
-    }
-  };
 
   const handleView = (request) => {
-    openModal('pendingRequestDetailsModal', {
-      request,
-      onRefresh: loadPendingRequests,
+    // Open the notification details in the sidebar
+    onNotificationClick({
+      id: request.JoinRequestId,
+      type: "joinRequest",
+      title: `Join Request: ${request.name}`,
+      description: `New join request from ${request.name} (${request.gender}). ${request.notes ? `Notes: ${request.notes}` : ''}`,
+      createdAt: request.createdAt,
+      icon: <Clock size={16} />,
+      timeLabel: formatArrivalTime({ createdAt: request.createdAt }),
+      details: `Join request details: ${request.name}, ${request.gender}, ${request.birthDate || 'No birth date'}, ${request.notes || 'No notes'}. Proof files: ${request.proofFiles.length}`,
+      requestData: request // Pass full request data for sidebar
     });
   };
 
@@ -96,17 +83,15 @@ const PendingRequestsPage = () => {
             </Text>
           </Card>
         ) : (
-          <Column gap="15px">
+          <div className="notification-grid">
             {requests.map((request) => (
               <JoinRequestCard
                 key={request.id}
                 request={request}
-                onApprove={handleApprove}
-                onDecline={handleDecline}
-                onView={handleView}
+                onClick={handleView}
               />
             ))}
-          </Column>
+          </div>
         )}
       </Column>
     </FlexContainer>

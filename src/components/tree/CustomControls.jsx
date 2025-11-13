@@ -18,7 +18,7 @@ const ControlButton = ({ onClick, title, children }) => (
 
 
 // The main CustomControls component.
-function CustomControls({ handleResetView, handleToggleOrientation, _handleCaptureView, handleQuickCapture  }) {
+function CustomControls({ handleResetView, handleToggleOrientation, handleQuickCapture  }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
 
@@ -32,7 +32,7 @@ function CustomControls({ handleResetView, handleToggleOrientation, _handleCaptu
       <ControlButton onClick={onZoomOut} title="Zoom Out"><ZoomOut color="var(--color-primary2)" size={20} /></ControlButton>
       <ControlButton onClick={onFitView} title="Fit to Screen"><Maximize color="var(--color-primary2)" size={20} /></ControlButton>
       <ControlButton onClick={handleToggleOrientation} title="Change Orientation"><Rotate3d  color="var(--color-primary2)" size={20} /></ControlButton>
-      <ControlButton onClick={handleQuickCapture} title="Quick Capture (PDF)"><Aperture  color="var(--color-primary2)" size={20} /></ControlButton>
+      <ControlButton onClick={handleQuickCapture} title="Quick Capture (PNG)"><Aperture  color="var(--color-primary2)" size={20} /></ControlButton>
       <ControlButton onClick={handleResetView} title="Reset View"><Home color="var(--color-primary2)" size={20} /></ControlButton>
     </div>
   );

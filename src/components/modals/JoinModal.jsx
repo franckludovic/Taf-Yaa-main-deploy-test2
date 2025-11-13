@@ -96,11 +96,8 @@ const JoinModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} maxWidth="600px">
+    <Modal isOpen={isOpen} title="Join Family tree" onClose={handleClose} maxWidth="600px">
       <FlexContainer direction="vertical" gap="30px" align="center" padding="20px">
-        <Text variant="heading2" textAlign="center" style={{ color: '#1e293b' }}>
-          Join Family Tree
-        </Text>
 
         {!inviteData && !error && (
           <>

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Checkbox from './Checkbox'
 import jsPDF from 'jspdf'
 
-export default function PDFExport({ isOpen, onClose, svgRef, containerRef, capturedDataUrl, updateModalData }) {
+export default function PDFExport({ isOpen, onClose, svgRef, containerRef, capturedDataUrl, updateModalData, treeData }) {
   const [scopeOptions, setScopeOptions] = useState('currentView')
   const [exportOptions, setExportOptions] = useState({ format: 'pdf' })
 
@@ -24,9 +24,11 @@ export default function PDFExport({ isOpen, onClose, svgRef, containerRef, captu
       console.log("Using captured dataUrl for export");
 
       if (exportOptions.format === "png") {
+        // Get family name from tree data or use default
+        const familyName = treeData?.familyName || 'family_tree';
         const link = document.createElement("a")
         link.href = dataUrl
-        link.download = "family_tree.png"
+        link.download = `${familyName}.png`
         link.click()
       } else if (exportOptions.format === "pdf") {
         const img = new window.Image()
@@ -38,7 +40,9 @@ export default function PDFExport({ isOpen, onClose, svgRef, containerRef, captu
             format: [img.width, img.height]
           })
           pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height)
-          pdf.save("family_tree.pdf")
+          // Get family name from tree data or use default
+          const familyName = treeData?.familyName || 'family_tree';
+          pdf.save(`${familyName}.pdf`)
         }
       }
 

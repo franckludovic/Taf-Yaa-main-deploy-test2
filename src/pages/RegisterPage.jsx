@@ -17,12 +17,11 @@ export default function RegisterPage() {
     language: 'en',
     termsAccepted: false,
   });
-  // Removed unused showPassword and showConfirmPassword state variables
+
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  // Remove PasswordInput component and use CompactTextField with new props
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,8 +32,7 @@ export default function RegisterPage() {
     await handleGoogleSignUp(navigate, setError, setLoading);
   };
 
-  // Removed unused languageOptions variable
-
+  
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white relative overflow-hidden">
       {/* Tree image on the right, branches extend behind form, centered vertically */}

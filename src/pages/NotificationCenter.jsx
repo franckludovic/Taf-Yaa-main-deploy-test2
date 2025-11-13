@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation, Outlet, useParams } from "react-router-dom";
+import { useLocation, Outlet, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Bell,
@@ -14,19 +14,17 @@ import {
   Users,
   X
 } from "lucide-react";
-import "../styles/NotificationCenter.css";
-import NavigationSideBar from "../components/NavigationSideBar/NavigationSideBar";
-import Row from "../layout/containers/Row";
-import Column from "../layout/containers/Column";
-import Card from "../layout/containers/Card";
-import Text from "../components/Text";
-import Button from "../components/Button";
+import PageFrame from "../layout/containers/PageFrame";
+import HorizontalNotificationTabbar from "../components/NavigationSideBar/HorizontalNotificationTabbar";
+import NotificationDetailsSidebar from "../components/sidebar/NotificationDetailsSidebar";
 
 const NotificationCenter = () => {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
   const { treeId } = useParams();
   const [activeSection, setActiveSection] = useState("overview");
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [isDetailsSidebarOpen, setIsDetailsSidebarOpen] = useState(false);
   const { t } = useTranslation();
 
   // Navigation items configuration for the notification center sidebar
@@ -73,33 +71,9 @@ const NotificationCenter = () => {
     },
   ];
 
-  // Quick actions configuration
-  const quickActions = [
-    {
-      id: 'view-profile',
-      label: t('navbar.view_profile'),
-      icon: <User size={16} />,
-      onClick: () => navigate(`/family-tree/${treeId}`)
-    },
-    {
-      id: 'settings',
-      label: t('navbar.settings'),
-      icon: <Settings size={16} />,
-      onClick: () => navigate('/settings')
-    }
-  ];
 
-  const handleSectionChange = (sectionId) => {
-    setActiveSection(sectionId);
-    const section = navigationItems.find(item => item.id === sectionId);
-    if (section && section.path) {
-      if (sectionId === 'overview') {
-        navigate(`/family-tree/${treeId}/notificationcenter`);
-      } else {
-        navigate(section.path);
-      }
-    }
-  };
+
+
 
   // Update active section based on current location
   React.useEffect(() => {
@@ -118,22 +92,36 @@ const NotificationCenter = () => {
   }, [location.pathname, treeId]);
 
   return (
-    <div className="notification-center">
-      
-      <div className="notification-center-body">
-        <div className="sidebar-container">
-          <NavigationSideBar
-            navItems={navigationItems}
-            title={t('navbar.activity_hub')}
-            quickActions={quickActions}
-            showQuickActions={true}
+    <div className="notification-center-container">
+      <PageFrame
+        topbar={
+        <HorizontalNotificationTabbar
+          navItems={navigationItems}
+          onSectionChange={(sectionId) => {
+            setActiveSection(sectionId);
+            const section = navigationItems.find(item => item.id === sectionId);
+            if (section && section.path) {
+              navigate(section.path);
+            }
+          }}
+        />
+        }
+        sidebar={true}
+        sidebarOpen={isDetailsSidebarOpen}
+        onSidebarClose={() => setIsDetailsSidebarOpen(false)}
+        customSidebar={
+          <NotificationDetailsSidebar
+            notification={selectedNotification}
+            isOpen={isDetailsSidebarOpen}
+            onClose={() => setIsDetailsSidebarOpen(false)}
           />
-        </div>
-
-        <div className="main-content">
-          <Outlet />
-        </div>
-      </div>
+        }
+      >
+        <Outlet context={{ onNotificationClick: (notification) => {
+          setSelectedNotification(notification);
+          setIsDetailsSidebarOpen(true);
+        }}} />
+      </PageFrame>
     </div>
   );
 };

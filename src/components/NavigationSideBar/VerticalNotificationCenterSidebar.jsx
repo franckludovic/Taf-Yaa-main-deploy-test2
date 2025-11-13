@@ -6,10 +6,9 @@ import Card from '../../layout/containers/Card';
 import Column from '../../layout/containers/Column';
 import Row from '../../layout/containers/Row';
 import Text from '../../components/Text';
-import Button from '../../components/Button';
 import { ChevronRight } from 'lucide-react';
 
-const NavigationSideBar = ({
+const VerticalNotificationCenterSidebar = ({
   navItems = [],
   title = "Menu",
   className = ""
@@ -33,7 +32,6 @@ const NavigationSideBar = ({
   const renderNavItem = (item, index) => {
     const isActive = item.active || (item.path && location.pathname === item.path);
 
-    // If item has a custom component, render it
     if (item.component) {
       return (
         <div key={item.id || index} onClick={() => handleCustomAction(item.onClick)}>
@@ -115,4 +113,4 @@ const NavigationSideBar = ({
   );
 };
 
-export default NavigationSideBar;
+export default VerticalNotificationCenterSidebar;
