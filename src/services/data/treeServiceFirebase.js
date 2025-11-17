@@ -12,8 +12,9 @@ import {
   where,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../../config/firebase.js';
+import { db, auth } from '../../config/firebase.js';
 import { generateId } from '../../utils/personUtils/idGenerator.js';
+import dataService from '../dataService.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -115,8 +116,27 @@ async function updateTree(treeId, updates) {
       updatedAt: getCurrentTimestamp()
     };
 
+    // Log activity for tree settings changes
+    const currentUser = auth.currentUser;
+    if (currentUser && Object.keys(updates).length > 0) {
+      const tree = await getTree(treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        const changedFields = Object.keys(updates).filter(key => key !== 'updatedAt');
+        if (changedFields.length > 0) {
+          await dataService.activityService.logActivity(
+            treeId,
+            currentUser.uid,
+            memberData.displayName || currentUser.email || 'Unknown User',
+            'tree_settings_edited',
+            { changedFields: changedFields }
+          );
+        }
+      }
+    }
+
     await updateDoc(treeRef, updateData);
-    
+
     // Return updated tree
     return await getTree(treeId);
   } catch (error) {
@@ -193,10 +213,32 @@ async function changeMemberRole(treeId, userId, newRole) {
       throw new Error("Member not found in this tree");
     }
 
+    const oldRole = members[memberIndex].role;
     members[memberIndex].role = newRole;
     members[memberIndex].updatedAt = new Date().toISOString();
 
     await updateTree(treeId, { members });
+
+    // Log activity for role change
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const targetUser = await getUser(userId);
+      const memberData = tree.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'role_changed',
+          {
+            targetUserName: targetUser?.displayName || targetUser?.email || 'Unknown User',
+            oldRole: oldRole,
+            newRole: newRole
+          }
+        );
+      }
+    }
+
     return members[memberIndex];
   } catch (error) {
     throw new Error(`Failed to change member role: ${error.message}`);

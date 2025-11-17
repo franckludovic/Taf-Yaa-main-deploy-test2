@@ -14,6 +14,7 @@ import { treeSettingsService } from './data/treeSettingLocal.js';
 import { clearDB as clearLocalDB } from './data/localDB.js';
 
 import { mediaService } from './mediaService.js';
+import activityService from './activityService.js';
 
 const BACKEND = "firebase"; // or4 "local"
 
@@ -60,6 +61,7 @@ const dataService = {
   ...cloudStorageService,
   clearLocalDB: clearLocalDB,
   getUser: services[BACKEND].getUser || services.firebase.getUser,
+  activityService,
 };
 
 export default dataService;

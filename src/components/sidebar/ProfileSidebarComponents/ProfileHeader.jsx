@@ -6,10 +6,8 @@ import Spacer from "../../Spacer";
 import { ArrowDownToLine, CircleX } from "lucide-react";
 import FlexContainer from "../../../layout/containers/FlexContainer";
 import ImageCard from "../../../layout/containers/ImageCard";
-
 import DownloadProfileModal from "./DownloadProfileModal";
-import PDFDownloadModal from "./PDFDownloadModal";
-import PNGDownloadModal from "./PNGDownloadModal";
+
 
 export default function ProfileHeader({
   profileName,

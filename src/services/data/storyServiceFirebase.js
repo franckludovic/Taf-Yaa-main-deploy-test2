@@ -13,8 +13,9 @@ import {
   serverTimestamp,
   deleteField
 } from 'firebase/firestore';
-import { db } from '../../config/firebase.js';
+import { db, auth } from '../../config/firebase.js';
 import { generateId } from '../../utils/personUtils/idGenerator.js';
+import dataService from '../dataService.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -37,6 +38,21 @@ const calculateContributors = (createdBy, attachments = []) => {
 
 async function addStory(story) {
   try {
+    // Log activity for story creation
+    const currentUser = auth.currentUser;
+    if (currentUser && story.treeId) {
+      const tree = await dataService.getTree(story.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          story.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'story_added',
+          { storyTitle: story.title || 'Untitled', storyId: story.id || generateId("story") }
+        );
+      }
+    }
 
     const storyRef = doc(db, 'stories', story.id || generateId("story"));
     const storyData = {
@@ -57,7 +73,7 @@ async function getStory(storyId) {
   try {
     const storyRef = doc(db, 'stories', storyId);
     const storySnap = await getDoc(storyRef);
-    
+
     if (storySnap.exists()) {
       return { id: storySnap.id, ...storySnap.data() };
     } else {
@@ -78,10 +94,44 @@ async function updateStory(storyId, updatedData) {
       throw new Error("Story not found");
     }
 
+    // Log activity for story update
+    const currentUser = auth.currentUser;
+    if (currentUser && currentStory.treeId) {
+      const tree = await dataService.getTree(currentStory.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          currentStory.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'story_edited',
+          { storyTitle: currentStory.title || 'Untitled', storyId: storyId }
+        );
+      }
+    }
+
     const updateData = {
       ...updatedData,
       updatedAt: getCurrentTimestamp()
     };
+
+    // Log activity for attachment addition if attachments are being added
+    if (updatedData.attachments && updatedData.attachments.length > 0) {
+      const currentUser = auth.currentUser;
+      if (currentUser && currentStory.treeId) {
+        const tree = await dataService.getTree(currentStory.treeId);
+        const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+        if (memberData) {
+          await dataService.activityService.logActivity(
+            currentStory.treeId,
+            currentUser.uid,
+            memberData.displayName || currentUser.email || 'Unknown User',
+            'attachment_added',
+            { storyTitle: currentStory.title || 'Untitled', storyId: storyId }
+          );
+        }
+      }
+    }
 
     // Recalculate contributors if attachments are being updated
     if (updatedData.attachments) {
@@ -104,9 +154,25 @@ async function deleteStory(storyId) {
       throw new Error("Story not found");
     }
 
+    // Log activity for story deletion
+    const currentUser = auth.currentUser;
+    if (currentUser && story.treeId) {
+      const tree = await dataService.getTree(story.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          story.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'story_deleted',
+          { storyTitle: story.title || 'Untitled', storyId: storyId }
+        );
+      }
+    }
+
     // Permanently delete the story
     await deleteDoc(doc(db, 'stories', storyId));
-    
+
     console.log(`DBG:storyServiceFirebase.deleteStory -> permanently removed ${storyId}`);
     return story;
   } catch (error) {
@@ -260,17 +326,17 @@ async function markStoriesForPersonDeleted(personId, batchId, undoExpiresAt) {
     const storiesRef = collection(db, 'stories');
     const q = query(storiesRef, where('active', '==', true));
     const querySnapshot = await getDocs(q);
-    
+
     let markedCount = 0;
     const now = new Date().toISOString();
 
     for (const doc of querySnapshot.docs) {
       const story = { id: doc.id, ...doc.data() };
-      
+
       // Check if story is for this person
-      if (story.personId === personId || 
+      if (story.personId === personId ||
           (Array.isArray(story.personIds) && story.personIds.includes(personId))) {
-        
+
         const updateData = {
           isDeleted: true,
           deletedAt: now,
@@ -300,7 +366,7 @@ async function undoStoriesDeletion(batchId) {
     const storiesRef = collection(db, 'stories');
     const q = query(storiesRef, where('deletionBatchId', '==', batchId));
     const querySnapshot = await getDocs(q);
-    
+
     let restoredCount = 0;
 
     for (const doc of querySnapshot.docs) {
@@ -337,7 +403,7 @@ async function purgeExpiredDeletedStories() {
       where('undoExpiresAt', '<=', now.toISOString())
     );
     const querySnapshot = await getDocs(q);
-    
+
     let removedCount = 0;
 
     for (const doc of querySnapshot.docs) {

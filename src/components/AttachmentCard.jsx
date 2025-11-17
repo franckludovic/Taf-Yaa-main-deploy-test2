@@ -18,7 +18,7 @@ const formatDuration = (duration) => {
   }
 };
 
-export const VideoAttachmentCard = ({ src, alt, caption, uploader, duration, onClick, showAuthor = true, onDelete, attachmentId }) => {
+export const VideoAttachmentCard = ({ src, alt, caption, uploader, duration, onClick, showAuthor = true, onDelete, showDeletButton = true, attachmentId }) => {
   const [uploaderName, setUploaderName] = useState('Unknown');
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -67,7 +67,7 @@ export const VideoAttachmentCard = ({ src, alt, caption, uploader, duration, onC
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Delete button - top right corner */}
-        {isHovered && (
+        { showDeletButton && isHovered && (
           <div className="absolute top-1 right-1 z-20">
             <Card
               onClick={(e) => {
@@ -132,7 +132,7 @@ export const VideoAttachmentCard = ({ src, alt, caption, uploader, duration, onC
   );
 };
 
-export const ImageAttachmentCard = ({ src, alt, caption, uploader, onClick, onDelete, attachmentId, showAuthor = true, showCaption = true }) => {
+export const ImageAttachmentCard = ({ src, alt, caption, showDeletButton = true, uploader, onClick, onDelete, attachmentId, showAuthor = true, showCaption = true }) => {
   const [uploaderName, setUploaderName] = useState('Unknown');
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -181,7 +181,7 @@ export const ImageAttachmentCard = ({ src, alt, caption, uploader, onClick, onDe
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Delete button - top right corner */}
-        {isHovered && (
+        {showDeletButton && isHovered && (
           <div className="absolute top-1 right-1 z-20">
             <Card
               onClick={(e) => {
@@ -240,7 +240,7 @@ export const ImageAttachmentCard = ({ src, alt, caption, uploader, onClick, onDe
   );
 };
 
-export const AudioAttachmentCard = ({ thumbnail, duration, title, uploader, onClick, onDelete, attachmentId, showAuthor = true }) => {
+export const AudioAttachmentCard = ({ thumbnail, duration, title, uploader, onClick, onDelete, attachmentId, showDeletButton = true, showAuthor = true }) => {
   const [uploaderName, setUploaderName] = useState('Unknown');
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -291,7 +291,7 @@ export const AudioAttachmentCard = ({ thumbnail, duration, title, uploader, onCl
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Delete button - top right corner */}
-        {isHovered && (
+        {showDeletButton && isHovered && (
           <div className="absolute top-1 right-1 z-20">
             <Card
               onClick={(e) => {
@@ -310,7 +310,6 @@ export const AudioAttachmentCard = ({ thumbnail, duration, title, uploader, onCl
             </Card>
           </div>
         )}
-
         {/* Thumbnail (only if provided) */}
         {thumbnail && (
           <img
@@ -355,7 +354,7 @@ export const AudioAttachmentCard = ({ thumbnail, duration, title, uploader, onCl
   );
 };
 
-export const FileAttachmentCard = ({ fileUrl, fileName, onClick, onDelete, attachmentId, showAuthor = true }) => {
+export const FileAttachmentCard = ({ fileUrl, showDeletButton = true, fileName, onClick, onDelete, attachmentId, showAuthor = true }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -389,13 +388,13 @@ export const FileAttachmentCard = ({ fileUrl, fileName, onClick, onDelete, attac
   return (
     <>
       <div
-        className="relative w-[120px] h-[120px] rounded-xl overflow-hidden shadow-md group cursor-pointer bg-zinc-50 border border-zinc-200 flex flex-col items-center justify-center"
+        className="relative w-[120px] h-[120px] rounded-xl overflow-hidden shadow-md group cursor-pointer bg-green-300 border border-zinc-200 flex flex-col items-center justify-center"
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Delete button - top right corner */}
-        {isHovered && (
+        {showDeletButton && isHovered && (
           <div className="absolute top-1 right-1 z-20">
             <Card
               onClick={(e) => {

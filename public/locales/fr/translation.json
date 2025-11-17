@@ -119,7 +119,7 @@
   },
 
   "baselayout": {
-  "welcome_title": "Bienvenue sur Taf’Yaa",
+  "welcome_title": "Bienvenue sur Taf'Yaa",
   "navbar_status": "La barre de navigation par défaut est maintenant active pour les tests",
   "open_sidebar": "Ouvrir la barre latérale du profil",
   "footer": "Tous droits réservés"
@@ -133,7 +133,7 @@
     "warning": "Ceci est un avertissement",
     "paragraph": "Ceci est un paragraphe rendu comme un élément de paragraphe.",
     "clamp_text": "Texte Tronqué",
-    "clamp_sample": "Ceci est un texte d’exemple qui sera tronqué après deux lignes. Cliquez sur « Voir plus » pour afficher tout le contenu.",
+    "clamp_sample": "Ceci est un texte d'exemple qui sera tronqué après deux lignes. Cliquez sur « Voir plus » pour afficher tout le contenu.",
     "buttons": "Boutons",
     "checkbox": "Case à cocher",
     "accept_terms": "Accepter les conditions",
@@ -169,7 +169,7 @@
     "card": "Carte",
     "card_title": "Titre de la Carte",
     "card_content": "Le contenu de la carte apparaît ici.",
-    "image_card": "Carte d’image",
+    "image_card": "Carte d'image",
     "sample_image1": "Image exemple 1",
     "sample_image3": "Image exemple 3",
     "fallback_icon": "Icône de secours",
@@ -196,5 +196,29 @@
     "large": "Grand bouton",
     "learn_more": "En savoir plus",
     "full_width": "Pleine largeur"
+  },
+
+  "activity": {
+    "all_types": "Tous les Types",
+    "person_added": "Personne Ajoutée",
+    "person_edited": "Personne Modifiée",
+    "person_deleted": "Personne Supprimée",
+    "story_added": "Histoire Ajoutée",
+    "story_edited": "Histoire Modifiée",
+    "story_deleted": "Histoire Supprimée",
+    "attachment_added": "Pièce Jointe Ajoutée",
+    "role_changed": "Rôle Modifié",
+    "tree_settings_edited": "Paramètres Modifiés",
+    "admin_only": "Accès Administrateur Requis",
+    "admin_only_desc": "Seuls les administrateurs peuvent consulter le journal d'activité familiale.",
+    "export": "Exporter",
+    "search_placeholder": "Rechercher des activités...",
+    "filter_by_type": "Filtrer par type",
+    "loading": "Chargement des activités...",
+    "no_activities": "Aucune Activité Trouvée",
+    "no_filtered_activities": "Aucune activité ne correspond à vos filtres.",
+    "no_activities_desc": "Les activités apparaîtront ici lorsque les membres de la famille interagiront avec l'arbre.",
+    "loading_more": "Chargement...",
+    "load_more": "Charger Plus"
   }
 }

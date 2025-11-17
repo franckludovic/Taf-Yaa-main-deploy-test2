@@ -8,9 +8,12 @@ import { reviewJoinRequest, acceptJoinRequest } from '../../services/joinRequest
 import { useAuth } from '../../context/AuthContext';
 import useToastStore from '../../store/useToastStore';
 import dataService from '../../services/dataService';
+import { authService } from '../../services/authService';
 import { VideoAttachmentCard, ImageAttachmentCard, AudioAttachmentCard, FileAttachmentCard } from '../AttachmentCard';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import ConfirmationModal from '../modals/ConfirmationModal';
+import WarningModal from '../modals/WarningModal';
 
 const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
   const { currentUser } = useAuth();
@@ -18,6 +21,9 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
   const [claimedFather, setClaimedFather] = useState(null);
   const [claimedMother, setClaimedMother] = useState(null);
   const [inviteType, setInviteType] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [reviewerName, setReviewerName] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,6 +50,12 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
               setInviteType(inviteData.type);
             }
           }
+
+          // Fetch reviewer name if request is approved or rejected
+          if (notification.requestData.reviewedBy && (notification.requestData.status === 'approved' || notification.requestData.status === 'rejected')) {
+            const reviewer = await authService.getUserById(notification.requestData.reviewedBy);
+            setReviewerName(reviewer?.displayName || 'Unknown User');
+          }
         } catch (error) {
           console.error('Error fetching data:', error);
         }
@@ -53,10 +65,27 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
     fetchData();
   }, [notification]);
 
-  const handleApprove = async () => {
+  const handleApproveClick = () => {
+    setShowApproveModal(true);
+  };
+
+  const handleRejectClick = () => {
+    setShowRejectModal(true);
+  };
+
+  const handleApproveConfirm = async () => {
     if (!notification.requestData) return;
 
     try {
+      // Check user permissions before approving
+      const tree = await dataService.getTree(notification.requestData.treeId);
+      const userRole = tree?.roles?.[currentUser.uid];
+
+      if (!userRole || (userRole !== 'admin' && userRole !== 'moderator')) {
+        addToast('You do not have permission to approve this request.', 'error');
+        return;
+      }
+
       await acceptJoinRequest(notification.requestData.JoinRequestId, currentUser.uid);
       addToast('Join request approved successfully', 'success');
       if (onRefresh) onRefresh();
@@ -67,7 +96,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
     }
   };
 
-  const handleReject = async () => {
+  const handleRejectConfirm = async () => {
     if (!notification.requestData) return;
 
     try {
@@ -84,7 +113,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
   const request = notification.requestData;
 
   return (
-    <Column gap="16px" padding="0" margin="0">
+    <Column gap="1rem" padding="0px 0px 3rem 0px" margin="0">
       {/* Basic Information */}
       <Card padding="16px" backgroundColor="var(--color-white)">
         <Column gap="12px" padding="0" margin="0">
@@ -141,10 +170,9 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
         <Card padding="16px" backgroundColor="var(--color-white)">
           <Column gap="8px" padding="0" margin="0">
             <Text bold variant='body2'>Notes from Requester</Text>
-            <Card alignItems='flex-start' backgroundColor='var(--color-gray)' padding="12px">
+            <Card alignItems='flex-start' backgroundColor='var(--color-light-blue)' padding="12px">
               <Text
                 as='p'
-                paragraph
                 variant='body2'
                 style={{
                   wordWrap: 'break-word',
@@ -164,7 +192,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
       <Card padding="16px" backgroundColor="var(--color-white)">
         <Column gap="12px" padding="0" margin="0">
           <Text bold variant='body2'>Attached Proof Files</Text>
-          <Card alignItems='flex-start' scrolling="horizontal" padding="0px 0px 0px 0px" margin='0px' backgroundColor="var(--color-transparent)" width='100%'>
+          <Card alignItems='flex-start' scrolling="horizontal" padding="10px 0px 10px 0px" margin='0px' backgroundColor="var(--color-transparent)" width='100%'>
             <Row margin='0px 0px 0px 0px' gap="1rem" padding="0" width="max-content" justifyContent="start" alignItems="start">
               {request?.proofFiles && request.proofFiles.length > 0 ? (
                 request.proofFiles.map((file, index) => {
@@ -174,6 +202,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
                         key={index}
                         showAuthor={false}
                         showCaption={false}
+                        showDeletButton ={false}
                         src={file.url}
                         alt={file.name || `Proof ${index + 1}`}
                         caption={file.name || `Proof ${index + 1}`}
@@ -185,6 +214,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
                       <VideoAttachmentCard
                         key={index}
                         showAuthor={false}
+                        showDeletButton ={false}
                         src={file.url.replace(/\.[^/.]+$/, '.jpg')}
                         alt={file.name || `Proof ${index + 1}`}
                         caption={file.name || `Proof ${index + 1}`}
@@ -196,6 +226,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
                     return (
                       <AudioAttachmentCard
                         key={index}
+                        showDeletButton ={false}
                         showAuthor={false}
                         src={file.url.replace(/\.[^/.]+$/, '.jpg')}
                         title={file.name || `Proof ${index + 1}`}
@@ -208,6 +239,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
                     return (
                       <FileAttachmentCard
                         showAuthor={false}
+                        showDeletButton ={false}
                         key={index}
                         fileUrl={file.url}
                         fileName={file.name || `Proof ${index + 1}`}
@@ -224,19 +256,60 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
         </Column>
       </Card>
 
-      {/* Action Buttons */}
-      {request?.status === 'pending' && (
+      {/* Action Buttons or Status Display */}
+
+      {inviteType === 'grant' && request?.status === 'pending' && (
+        <Card backgroundColor='var(--color-transparent)' padding='0px 2rem 0px 2rem' margin='0px'>
+          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick}>
+              Cancel Request
+          </Button>
+        </Card>
+      )}
+
+      {request?.status === 'pending' && inviteType !== 'grant' && (
         <Row padding='0px' margin='0px' gap="8px">
-          {inviteType !== 'grant' && (
-            <Button size='sm' fullWidth variant='primary' onClick={handleApprove}>
-              Accept Request
-            </Button>
-          )}
-          <Button size='sm' fullWidth variant='danger' onClick={handleReject}>
-            {inviteType === 'grant' ? 'Cancel Request' : 'Reject Request'}
+          <Button size='sm' fullWidth variant='primary' onClick={handleApproveClick}>
+            Accept Request
+          </Button>
+          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick}>
+            Reject Request
           </Button>
         </Row>
       )}
+
+      {/* Status Display for Approved/Rejected Requests */}
+      {(request?.status === 'approved' || request?.status === 'rejected') && (
+        <Card
+          padding="12px"
+          backgroundColor={request.status === 'approved' ? 'var(--color-success-light)' : 'var(--color-danger-light)'}
+          margin="0"
+        >
+          <Text variant="body2" bold>
+            {request.status === 'approved' ? 'Approved' : 'Rejected'} by {reviewerName} on {new Date(request.reviewedAt).toLocaleDateString()}
+          </Text>
+        </Card>
+      )}
+
+      {/* Modals */}
+      <ConfirmationModal
+        isOpen={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        title="Confirm Approval"
+        message={`Are you sure you want to approve ${request?.name}'s join request? This will add them as a member to the family tree and they will be able to view and edit family information.`}
+        confirmText="Approve"
+        confirmVariant="primary"
+        onConfirm={handleApproveConfirm}
+      />
+
+      <WarningModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        title="Confirm Rejection"
+        message={`Are you sure you want to reject ${request?.name}'s join request? This action cannot be undone and they will need to submit a new request if they want to join again.`}
+        confirmText="Reject"
+        confirmVariant="danger"
+        onConfirm={handleRejectConfirm}
+      />
     </Column>
   );
 };

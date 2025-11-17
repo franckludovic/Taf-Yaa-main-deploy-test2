@@ -18,7 +18,7 @@ import { generateId } from '../../utils/personUtils/idGenerator.js';
 import { marriageServiceFirebase } from './marriageServiceFirebase.js';
 import { eventServiceFirebase } from './eventServiceFirebase.js';
 import { storyServiceFirebase } from './storyServiceFirebase.js';
-import { treeServiceFirebase } from './treeServiceFirebase.js';
+import dataService from '../dataService.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -50,7 +50,7 @@ async function addPerson(person) {
     }
 
     // Check tree membership
-    const tree = await treeServiceFirebase.getTree(person.treeId);
+    const tree = await dataService.getTree(person.treeId);
     console.log("addPerson -> Tree data:", tree);
 
     if (!tree) {
@@ -86,6 +86,15 @@ async function addPerson(person) {
     await setDoc(personRef, personData);
     console.log("addPerson -> Person created successfully");
 
+    // Log activity
+    await dataService.activityService.logActivity(
+      person.treeId,
+      currentUser.uid,
+      currentUser.displayName || 'Unknown User',
+      'person_added',
+      { personName: person.name || 'Unknown', personId: person.id }
+    );
+
     return { id: person.id, ...personData };
   } catch (error) {
     console.error("addPerson -> Firestore error:", error);
@@ -99,7 +108,7 @@ async function getPerson(id) {
   try {
     const personRef = doc(db, 'people', id);
     const personSnap = await getDoc(personRef);
-    
+
     if (personSnap.exists()) {
       return { id: personSnap.id, ...personSnap.data() };
     } else {
@@ -112,6 +121,12 @@ async function getPerson(id) {
 
 async function updatePerson(personId, updatedPersonData) {
   try {
+    // Get original person data before update
+    const originalPerson = await getPerson(personId);
+    if (!originalPerson) {
+      throw new Error("Person not found");
+    }
+
     const personRef = doc(db, 'people', personId);
     const updateData = {
       ...updatedPersonData,
@@ -119,7 +134,62 @@ async function updatePerson(personId, updatedPersonData) {
     };
 
     await updateDoc(personRef, updateData);
-    
+
+    // Calculate changed fields with old and new values
+    const changedFields = [];
+    const fieldsToCheck = [
+      'name', 'gender', 'dob', 'dod', 'bio', 'occupation', 'location', 'notes', 'photoUrl',
+      'email', 'phoneNumber', 'nationality', 'countryOfResidence', 'placeOfBirth', 'placeOfDeath',
+      'tribe', 'language', 'biography', 'isDeceased', 'linkedUserId'
+    ];
+
+    for (const field of fieldsToCheck) {
+      if (updateData[field] !== undefined && updateData[field] !== originalPerson[field]) {
+        changedFields.push({
+          field,
+          oldValue: originalPerson[field] || null,
+          newValue: updateData[field] || null
+        });
+      }
+    }
+
+    // If no known fields changed, check if any unknown fields were changed
+    if (changedFields.length === 0) {
+      const updateFields = Object.keys(updateData).filter(key => key !== 'updatedAt');
+      for (const field of updateFields) {
+        if (updateData[field] !== originalPerson[field]) {
+          changedFields.push({
+            field: 'unknown fields',
+            oldValue: null,
+            newValue: null
+          });
+          break; // Only add once
+        }
+      }
+    }
+
+    // Log activity for the update
+    if (originalPerson.treeId) {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const tree = await dataService.getTree(originalPerson.treeId);
+        const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+        if (memberData) {
+          await dataService.activityService.logActivity(
+            originalPerson.treeId,
+            currentUser.uid,
+            currentUser.displayName || 'Unknown User',
+            'person_edited',
+            {
+              personName: originalPerson.name || 'Unknown',
+              personId: personId,
+              changedFields: changedFields
+            }
+          );
+        }
+      }
+    }
+
     // Return updated person
     return await getPerson(personId);
   } catch (error) {
@@ -132,6 +202,22 @@ async function deletePerson(personId, mode = "soft", options = {}) {
     const person = await getPerson(personId);
     if (!person) {
       throw new Error("Person not found");
+    }
+
+    // Log activity before deletion
+    const currentUser = auth.currentUser;
+    if (currentUser && person.treeId) {
+      const tree = await dataService.getTree(person.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          person.treeId,
+          currentUser.uid,
+          currentUser.displayName || 'Unknown User',
+          'person_deleted',
+          { personName: person.name || 'Unknown', personId: personId, deletionMode: mode }
+        );
+      }
     }
 
     const now = new Date();
@@ -174,26 +260,26 @@ async function deletePerson(personId, mode = "soft", options = {}) {
         // Get marriages where this person is a spouse
         const marriages = await marriageServiceFirebase.getMarriagesByPersonId(id);
 
-        for (const marriage of marriages) {
-          if (marriage.marriageType === "monogamous") {
+        for (const marriageRecord of marriages) {
+          if (marriageRecord.marriageType === "monogamous") {
             // Check if person is direct line spouse
-            if (marriage.spouses.includes(id)) {
+            if (marriageRecord.spouses.includes(id)) {
               // Direct line spouse deletion: delete entire marriage and descendants
-              marriagesToDelete.add(marriage.id);
-              marriage.spouses.forEach(spouseId => toDelete.add(spouseId));
-              if (Array.isArray(marriage.childrenIds)) {
-                for (const childId of marriage.childrenIds) {
+              marriagesToDelete.add(marriageRecord.id);
+              marriageRecord.spouses.forEach(spouseId => toDelete.add(spouseId));
+              if (Array.isArray(marriageRecord.childrenIds)) {
+                for (const childId of marriageRecord.childrenIds) {
                   await collectDescendants(childId);
                 }
               }
             }
-          } else if (marriage.marriageType === "polygamous") {
-            if (marriage.husbandId === id) {
+          } else if (marriageRecord.marriageType === "polygamous") {
+            if (marriageRecord.husbandId === id) {
               // Direct line spouse deletion: delete entire marriage and descendants
-              marriagesToDelete.add(marriage.id);
-              toDelete.add(marriage.husbandId);
-              if (Array.isArray(marriage.wives)) {
-                marriage.wives.forEach(w => {
+              marriagesToDelete.add(marriageRecord.id);
+              toDelete.add(marriageRecord.husbandId);
+              if (Array.isArray(marriageRecord.wives)) {
+                marriageRecord.wives.forEach(w => {
                   toDelete.add(w.wifeId);
                   if (Array.isArray(w.childrenIds)) {
                     w.childrenIds.forEach(childId => collectDescendants(childId));
@@ -202,7 +288,7 @@ async function deletePerson(personId, mode = "soft", options = {}) {
               }
             } else {
               // Check if person is a wife
-              const wifeData = marriage.wives.find(w => w.wifeId === id);
+              const wifeData = marriageRecord.wives.find(w => w.wifeId === id);
               if (wifeData) {
                 // Wife deletion: delete wife and descendants, but keep marriage
                 toDelete.add(wifeData.wifeId);
@@ -216,11 +302,7 @@ async function deletePerson(personId, mode = "soft", options = {}) {
           }
         }
 
-        // Get marriages where this person is a child
-        const childMarriages = await marriageServiceFirebase.getMarriagesByChildId(id);
-        for (const _ of childMarriages) {
-          await collectDescendants(id);
-        }
+
       };
 
       // Start cascade from the root person
@@ -302,7 +384,7 @@ async function previewCascadeDelete(personId) {
 
       // Get marriages where this person is a spouse
       const marriages = await marriageServiceFirebase.getMarriagesByPersonId(id);
-      
+
       for (const marriage of marriages) {
         if (marriage.marriageType === "monogamous") {
           // Add all spouses to deletion set
@@ -337,7 +419,7 @@ async function previewCascadeDelete(personId) {
 
       // Get marriages where this person is a child
       const childMarriages = await marriageServiceFirebase.getMarriagesByChildId(id);
-      for (const marriage of childMarriages) {
+      for (const _ of childMarriages) {
         await collectDescendants(id);
       }
     };
@@ -402,7 +484,7 @@ async function undoDelete(personId) {
         where('deletionMode', '==', 'cascade')
       );
       const peopleSnapshot = await getDocs(peopleQuery);
-      
+
       const restoredIds = [];
       for (const doc of peopleSnapshot.docs) {
         const updateData = {
@@ -413,7 +495,7 @@ async function undoDelete(personId) {
           undoExpiresAt: deleteField(),
           deletionBatchId: deleteField(),
           isCascadeRoot: deleteField(),
-          active: true, // Restore active status
+          active: true, 
           updatedAt: getCurrentTimestamp()
         };
 
@@ -429,7 +511,7 @@ async function undoDelete(personId) {
         where('deletionMode', '==', 'cascade')
       );
       const marriagesSnapshot = await getDocs(marriagesQuery);
-      
+
       const restoredMarriageIds = [];
       for (const doc of marriagesSnapshot.docs) {
         const updateData = {
@@ -467,17 +549,17 @@ async function purgeExpiredDeletions() {
   try {
     const now = new Date();
     const peopleRef = collection(db, 'people');
-    
+
     // Get all people with pending deletions
     const q = query(
       peopleRef,
       where('pendingDeletion', '==', true),
       where('undoExpiresAt', '<=', now.toISOString())
     );
-    
+
     const querySnapshot = await getDocs(q);
     const expiredPeople = [];
-    
+
     querySnapshot.forEach((doc) => {
       expiredPeople.push({ id: doc.id, ...doc.data() });
     });
@@ -507,34 +589,34 @@ async function purgeExpiredDeletions() {
       }
     }
 
-      // Purge expired marriages
-      const marriagesRef = collection(db, 'marriages');
-      const marriagesQuery = query(
-        marriagesRef,
-        where('pendingDeletion', '==', true),
-        where('undoExpiresAt', '<=', now.toISOString())
-      );
-      const marriagesSnapshot = await getDocs(marriagesQuery);
-      
-      let removedMarriageCount = 0;
-      for (const doc of marriagesSnapshot.docs) {
-        await deleteDoc(doc.ref);
-        removedMarriageCount++;
-      }
+    // Purge expired marriages
+    const marriagesRef = collection(db, 'marriages');
+    const marriagesQuery = query(
+      marriagesRef,
+      where('pendingDeletion', '==', true),
+      where('undoExpiresAt', '<=', now.toISOString())
+    );
+    const marriagesSnapshot = await getDocs(marriagesQuery);
 
-      // Purge expired events and stories
-      const [eventPurgeResult, storyPurgeResult] = await Promise.all([
-        eventServiceFirebase.purgeExpiredDeletedEvents(),
-        storyServiceFirebase.purgeExpiredDeletedStories()
-      ]);
+    let removedMarriageCount = 0;
+    for (const doc of marriagesSnapshot.docs) {
+      await deleteDoc(doc.ref);
+      removedMarriageCount++;
+    }
 
-      console.log(`DBG:purgeExpiredDeletions -> purged ${eventPurgeResult.removedCount} events and ${storyPurgeResult.removedCount} stories`);
+    // Purge expired events and stories
+    const [eventPurgeResult, storyPurgeResult] = await Promise.all([
+      eventServiceFirebase.purgeExpiredDeletedEvents(),
+      storyServiceFirebase.purgeExpiredDeletedStories()
+    ]);
 
-      return {
-        finalizedSoftCount,
-        removedPeopleCount,
-        removedMarriageCount
-      };
+    console.log(`DBG:purgeExpiredDeletions -> purged ${eventPurgeResult.removedCount} events and ${storyPurgeResult.removedCount} stories`);
+
+    return {
+      finalizedSoftCount,
+      removedPeopleCount,
+      removedMarriageCount
+    };
   } catch (error) {
     throw new Error(`Failed to purge expired deletions: ${error.message}`);
   }
@@ -585,17 +667,17 @@ async function findPeopleByName(query) {
       where('name', '>=', query.trim()),
       where('name', '<=', query.trim() + '\uf8ff')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const results = [];
-    
+
     querySnapshot.forEach((doc) => {
       const person = { id: doc.id, ...doc.data() };
       if (person.name && person.name.toLowerCase().includes(query.toLowerCase())) {
         results.push(person);
       }
     });
-    
+
     return results;
   } catch (error) {
     throw new Error(`Failed to find people by name: ${error.message}`);
@@ -647,18 +729,18 @@ async function getDeletedPersons() {
       peopleRef,
       where('pendingDeletion', '==', true)
     );
-    
+
     const querySnapshot = await getDocs(q);
     const now = new Date();
     const deletedPersons = [];
-    
+
     querySnapshot.forEach((doc) => {
       const person = { id: doc.id, ...doc.data() };
       if (person.isPlaceholder || person.isDeleted) {
         const undoExpiresAt = person.undoExpiresAt ? new Date(person.undoExpiresAt) : null;
         const timeRemaining = undoExpiresAt ? Math.max(0, undoExpiresAt.getTime() - now.getTime()) : 0;
         const isExpired = timeRemaining === 0;
-        
+
         deletedPersons.push({
           ...person,
           timeRemaining,
@@ -669,7 +751,7 @@ async function getDeletedPersons() {
         });
       }
     });
-    
+
     return deletedPersons;
   } catch (error) {
     throw new Error(`Failed to get deleted persons: ${error.message}`);
@@ -688,18 +770,18 @@ async function getDeletedPersonsByTreeId(treeId) {
       where('treeId', '==', treeId),
       where('pendingDeletion', '==', true)
     );
-    
+
     const querySnapshot = await getDocs(q);
     const now = new Date();
     const deletedPersons = [];
-    
+
     querySnapshot.forEach((doc) => {
       const person = { id: doc.id, ...doc.data() };
       if (person.isPlaceholder || person.isDeleted) {
         const undoExpiresAt = person.undoExpiresAt ? new Date(person.undoExpiresAt) : null;
         const timeRemaining = undoExpiresAt ? Math.max(0, undoExpiresAt.getTime() - now.getTime()) : 0;
         const isExpired = timeRemaining === 0;
-        
+
         deletedPersons.push({
           ...person,
           timeRemaining,
@@ -710,7 +792,7 @@ async function getDeletedPersonsByTreeId(treeId) {
         });
       }
     });
-    
+
     return deletedPersons;
   } catch (error) {
     throw new Error(`Failed to get deleted persons by tree ID: ${error.message}`);
@@ -730,26 +812,43 @@ async function purgePerson(personId) {
 
     // Clean up references in marriages before permanent deletion
     const marriages = await marriageServiceFirebase.getMarriagesByPersonId(personId);
-    for (const marriage of marriages) {
-      if (marriage.marriageType === "monogamous") {
+    for (const currentMarriage of marriages) {
+      // Log activity for permanent deletion
+      if (person.treeId) {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const tree = await dataService.getTree(person.treeId);
+          const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+          if (memberData) {
+            await dataService.activityService.logActivity(
+              person.treeId,
+              currentUser.uid,
+              currentUser.displayName || 'Unknown User',
+              'person_purged',
+              { personName: person.name || 'Unknown', personId: personId }
+            );
+          }
+        }
+      }
+      if (currentMarriage.marriageType === "monogamous") {
         // Remove person from spouses array
-        const updatedSpouses = marriage.spouses?.filter(id => id !== personId) || [];
-        await marriageServiceFirebase.updateMarriage(marriage.id, { spouses: updatedSpouses });
-      } else if (marriage.marriageType === "polygamous") {
-        if (marriage.husbandId === personId) {
+        const updatedSpouses = currentMarriage.spouses?.filter(id => id !== personId) || [];
+        await marriageServiceFirebase.updateMarriage(currentMarriage.id, { spouses: updatedSpouses });
+      } else if (currentMarriage.marriageType === "polygamous") {
+        if (currentMarriage.husbandId === personId) {
           // Remove husband
-          await marriageServiceFirebase.updateMarriage(marriage.id, { husbandId: null });
+          await marriageServiceFirebase.updateMarriage(currentMarriage.id, { husbandId: null });
         } else {
           // Remove person from wives array
-          const updatedWives = marriage.wives?.filter(w => w.wifeId !== personId) || [];
-          await marriageServiceFirebase.updateMarriage(marriage.id, { wives: updatedWives });
+          const updatedWives = currentMarriage.wives?.filter(w => w.wifeId !== personId) || [];
+          await marriageServiceFirebase.updateMarriage(currentMarriage.id, { wives: updatedWives });
         }
       }
     }
 
     // Permanently delete the person
     await deleteDoc(doc(db, 'people', personId));
-    
+
     console.log(`DBG:personServiceFirebase.purgePerson -> permanently removed ${personId}`);
     return { purgedId: personId };
   } catch (error) {
@@ -783,7 +882,7 @@ async function findPersonByFields(fields) {
     }
 
     const querySnapshot = await getDocs(q);
-    
+
     if (querySnapshot.empty) {
       return null;
     }

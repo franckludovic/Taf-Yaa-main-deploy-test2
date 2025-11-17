@@ -30,15 +30,14 @@ const ConfirmationModal = ({
   };
 
   const handleCancel = () => {
-    if (onCancel) onCancel(); // ✅ trigger parent callback
+    if (onCancel) onCancel(); 
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} {...modalProps} style={{ zIndex: 12000, backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+    <Modal isOpen={isOpen} title={title} onClose={onClose} {...modalProps} style={{ zIndex: 12000, backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
       <FlexContainer padding='0.5rem' direction="column" gap="5px">
-        <Text variant="h3">{title}</Text>
-        <Divider />
+
         <Text variant="p">{message}</Text>
 
         <Row alignItems='center' justifyContent='start' padding='0px' margin='0px' fitContent style={{overflowY:'hidden'}}>

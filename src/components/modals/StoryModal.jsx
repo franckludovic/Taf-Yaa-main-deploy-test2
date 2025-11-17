@@ -135,15 +135,7 @@ const StoryModal = ({ isOpen, onClose, story }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} maxHeight="90vh" width="800px">
-
-        {/* Header */}
-        <div className='max-w-80 flex flex-col'>
-          <Text as='span' ellipsis variant="heading1" color="primary">{title}</Text>
-        </div>
-
-        <Divider />
-        <Spacer size='lg' />
+      <Modal isOpen={isOpen} title={title} onClose={onClose} maxHeight="90vh" width="800px">
 
         <Card backgroundColor='var(--color-transparent)' alignItems='flex start' width='100%' padding='0px' margin='0px'>
           <Text as='span' paragraph variant="body1" color="secondary-text">{description}</Text>

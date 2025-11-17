@@ -119,7 +119,7 @@
   },
 
   "baselayout": {
-  "welcome_title": "Welcome to Taf’Yaa",
+  "welcome_title": "Welcome to Taf'Yaa",
   "navbar_status": "Default navbar is now active for testing",
   "open_sidebar": "Open Profile Sidebar",
   "footer": "All rights reserved"
@@ -195,5 +195,29 @@
     "large": "Large button",
     "learn_more": "Learn more",
     "full_width": "Full Width"
+  },
+
+  "activity": {
+    "all_types": "All Types",
+    "person_added": "Person Added",
+    "person_edited": "Person Edited",
+    "person_deleted": "Person Deleted",
+    "story_added": "Story Added",
+    "story_edited": "Story Edited",
+    "story_deleted": "Story Deleted",
+    "attachment_added": "Attachment Added",
+    "role_changed": "Role Changed",
+    "tree_settings_edited": "Settings Edited",
+    "admin_only": "Admin Access Required",
+    "admin_only_desc": "Only administrators can view the family activity log.",
+    "export": "Export",
+    "search_placeholder": "Search activities...",
+    "filter_by_type": "Filter by type",
+    "loading": "Loading activities...",
+    "no_activities": "No Activities Found",
+    "no_filtered_activities": "No activities match your filters.",
+    "no_activities_desc": "Activities will appear here as family members interact with the tree.",
+    "loading_more": "Loading...",
+    "load_more": "Load More"
   }
 }

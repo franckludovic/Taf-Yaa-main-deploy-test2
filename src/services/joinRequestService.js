@@ -67,31 +67,39 @@ export async function reviewJoinRequest(joinRequestId, status, reviewedBy, appro
 // ACCEPT JOIN REQUEST (UNIFIED LOGIC)
 
 export async function acceptJoinRequest(joinRequestId, reviewedBy) {
-  // Load join request
-  const joinRequestSnap = await getDocs(
-    query(collection(db, 'joinRequests'), where('JoinRequestId', '==', joinRequestId))
-  );
-  if (joinRequestSnap.empty) throw new Error('Join request not found');
+  // Load join request using direct getDoc()
+  const joinRequestRef = doc(db, 'joinRequests', joinRequestId);
+  const joinRequestSnap = await getDoc(joinRequestRef);
 
-  const joinRequest = joinRequestSnap.docs[0].data();
-  if (joinRequest.status !== 'pending') throw new Error('Join request is not pending');
+  if (!joinRequestSnap.exists()) {
+    throw new Error('Join request not found');
+  }
 
-  //Load invite for role assignment
-  const inviteRef = doc(collection(db, 'invites'), joinRequest.inviteId);
+  const joinRequest = joinRequestSnap.data();
+
+  if (joinRequest.status !== 'pending') {
+    throw new Error('Join request is not pending');
+  }
+
+  // Load invite for role assignment
+  const inviteRef = doc(db, 'invites', joinRequest.inviteId);
   const inviteDoc = await getDoc(inviteRef);
-  if (!inviteDoc.exists) throw new Error('Invite not found');
+  if (!inviteDoc.exists()) throw new Error('Invite not found');
+
   const invite = inviteDoc.data();
 
   // Lazy imports for heavy modules
   const dataService = (await import('../services/dataService')).default;
-  const { treeServiceFirebase } = await import('../services/data/treeServiceFirebase');
   const { addChild } = await import('../controllers/tree/addChild');
 
-  //Validate parent info
+  // Validate parent info
   const parentId = joinRequest.claimedFatherId || joinRequest.claimedMotherId;
-  if (!parentId) throw new Error('Join request must specify at least one parent');
 
-  //Prepare child data
+  if (!parentId) {
+    throw new Error('Join request must specify at least one parent');
+  }
+
+  // Prepare child data
   const childData = {
     fullName: joinRequest.name,
     gender: joinRequest.gender,
@@ -101,7 +109,7 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
     linkedUserId: joinRequest.submittedBy
   };
 
-  //Delegate person creation + attachment to addChild()
+  // Create person + link using addChild
   const result = await addChild(joinRequest.treeId, {
     parentId,
     childData,
@@ -110,7 +118,7 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
 
   const newPerson = result.child;
 
-  //If submitted by a user, add as member
+  // Add member to tree
   if (joinRequest.submittedBy) {
     await dataService.addMember(joinRequest.treeId, {
       userId: joinRequest.submittedBy,
@@ -119,11 +127,9 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
     });
   }
 
-  //Trigger UI refresh
   window.dispatchEvent(new Event('familyDataChanged'));
 
-  //Update join request record
-  const joinRequestRef = doc(collection(db, 'joinRequests'), joinRequestId);
+  // Update join request
   const updateData = {
     status: 'approved',
     reviewedAt: new Date().toISOString(),
@@ -136,8 +142,6 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
   return { newPerson, updateData };
 }
 
-
-// GET ALL JOIN REQUESTS FOR A TREE
 
 export async function getJoinRequestsForTree(treeId) {
   const joinRequestsRef = collection(db, 'joinRequests');

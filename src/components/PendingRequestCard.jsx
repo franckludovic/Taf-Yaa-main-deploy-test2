@@ -54,16 +54,21 @@ const JoinRequestCard = ({ request, onClick }) => {
       className="cursor-pointer hover:shadow-md transition-shadow"
       onClick={() => onClick?.(request)}
     >
-      {/* Join Request Label */}
-      <Card fitContent positionType="absolute" margin="-5px -5px 0px 0px" backgroundColor="var(--color-transparent)" position="top-right">
-        <Pill backgroundColor="var(--color-primary-dark)">
-          <Text as="p" bold color="white" style={{fontSize: "0.6rem"}}>Join request</Text>
+      
+      <Card fitContent positionType="absolute" margin="-5px 0px 0px -5px" backgroundColor="var(--color-transparent)" position="top-left">
+        <Pill backgroundColor={
+          request?.status === 'pending' ? 'var(--color-warning-light)' :
+          request?.status === 'rejected' ? 'var(--color-danger-light)' :
+          request?.status === 'approved' ? 'var(--color-success-light)' :
+          'var(--color-gray-light)'
+        }>
+          <Text as="p" color="dark" bold style={{fontSize: "0.5rem"}}>{request?.status || "unknown"}</Text>
         </Pill>
       </Card>
-      <Card fitContent positionType="absolute" margin="-5px 0px 0px -5px" backgroundColor="var(--color-transparent)" position="top-left">
-        <Pill backgroundColor="var(--color-ModalWaring)">
-          <Text as="p" color="dark-blue" bold style={{fontSize: "0.5rem"}}>{request?.status || "unknown"}</Text>
-        </Pill>
+      <Card fitContent positionType="absolute" margin="-5px -5px 0px 0px" backgroundColor="var(--color-transparent)" position="top-right">
+          <Pill backgroundColor="var(--color-info-light)">
+            <Text as="p" color="dark" style={{fontSize: "0.5rem"}}>{getRequestType()}</Text>
+          </Pill>
       </Card>
 
       {/* Header */}
@@ -92,11 +97,9 @@ const JoinRequestCard = ({ request, onClick }) => {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
       
-        {/* Time Info */}
-        <Card fitContent positionType="absolute" margin="0px px -5px -5px" backgroundColor="var(--color-transparent)" position="bottom-left">
+      {/* Time Info */}
+        <Card fitContent positionType="absolute" margin="0px px -5px -5px" backgroundColor="var(--color-transparent)" position="bottom-right">
           <div className="flex items-center gap-1">
             <Clock size={10} className="text-neutral-500 dark:text-neutral-400" />
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -104,12 +107,7 @@ const JoinRequestCard = ({ request, onClick }) => {
             </p>
           </div>
         </Card>
-      
-         <Card fitContent positionType="absolute" margin="0px -5px -5px 0px" backgroundColor="var(--color-transparent)" position="bottom-right">
-          <Pill backgroundColor="var(--color-success-light)">
-            <Text as="p" color="dark" style={{fontSize: "0.5rem"}}>{getRequestType()}</Text>
-          </Pill>
-        </Card>
+    
     </Card>
   );
 };

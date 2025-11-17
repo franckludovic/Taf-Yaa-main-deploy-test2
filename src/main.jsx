@@ -15,6 +15,7 @@ import SuggestionsPage from "./pages/SuggestionsPage.jsx";
 import FamilyTreePage from "./pages/FamilyTreePage.jsx";
 import NotificationOverviewPage from "./pages/NotificationOverviewPage.jsx";
 import PendingRequestsPage from "./pages/PendingRequestsPage.jsx";
+import FamilyActivityPage from "./pages/FamilyActivityPage.jsx";
 import MyTreesPage from "./pages/MyTreesPage.jsx";
 import MyStoriesPage from "./pages/MyStoriesPage.jsx";
 import MembersPage from "./pages/MembersPage.jsx";
@@ -136,7 +137,7 @@ const router = createBrowserRouter([
               },
               {
                 path: "activity",
-                element: <div>Family Activity Content</div>,
+                element: <FamilyActivityPage />,
               },
             ],
           },

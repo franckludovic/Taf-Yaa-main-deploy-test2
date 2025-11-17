@@ -56,7 +56,7 @@ const StoryCard = ({ story, onClick, isSelected = false, onEdit, onDelete }) => 
 
   const getStoryThumbnail = (story) => {
     const firstImage = story.attachments?.find((a) => a.type === "image");
-    return firstImage ? firstImage.url : "/Images/image1.png";
+    return firstImage ? firstImage.url : "/Images/Logo-square-aspect-ratio.png";
   };
 
   const getAttachmentCount = (story) => story.attachments?.length || 0;

@@ -103,7 +103,7 @@ const NotificationDetailsSidebar = ({
 
   return (
     <div className={`notification-details-sidebar ${className}`}>
-      <Column padding="20px 16px" gap="16px">
+      <Column padding="20px 16px" margin='2rem 0rem 0rem 0rem' gap="16px">
         {/* Header */}
         <div className="flex justify-between items-center w-full mb-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -127,14 +127,15 @@ const NotificationDetailsSidebar = ({
               </Text>
             </div>
           </div>
-          <Button
-            variant="danger"
-            size='sm'
+          <Card
             onClick={onClose}
-            style={{ padding: '3px' }}
+            fitContent
+            padding='3px'
+            size={25}
+            backgroundColor='var(--color-danger)'
           >
-            <X size={18} />
-          </Button>
+            <X size={18} color="white" strokeWidth={3} />
+          </Card>
         </div>
 
         {/* Dynamic Content Based on Notification Type */}

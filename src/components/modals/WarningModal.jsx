@@ -29,11 +29,8 @@ const WarningModal = ({
 
 
   return (
-    <Modal style={{overvlowX: 'hidden', padding: '0px'}} isOpen={isOpen} onClose={onClose} showCLoseIcon = {false} {...modalProps}>
+    <Modal style={{overvlowX: 'hidden', padding: '0px'}} title={title} isOpen={isOpen} onClose={onClose} showCLoseIcon = {false} {...modalProps}>
      
-     <Card alignItems='start' padding='0px 0px 0px 20px' margin='0px' borderRadius='0px' style={{minHeight : '60px'}}   backgroundColor="var(--color-ModalWaring)">
-        <Text variant="heading3">{title}</Text>
-     </Card>
      <FlexContainer style={{overvlowX: 'hidden'}} padding='5px 16px 16px 16px'  direction="column" gap="5px"> 
         <Divider />
         <Text variant="p">{message}</Text>

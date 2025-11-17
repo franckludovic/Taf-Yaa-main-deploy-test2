@@ -107,15 +107,14 @@ const NotificationCenter = () => {
         />
         }
         sidebar={true}
+        sidebarContentType="notification"
+        sidebarProps={{
+          notification: selectedNotification,
+          isOpen: isDetailsSidebarOpen,
+          onClose: () => setIsDetailsSidebarOpen(false),
+        }}
         sidebarOpen={isDetailsSidebarOpen}
         onSidebarClose={() => setIsDetailsSidebarOpen(false)}
-        customSidebar={
-          <NotificationDetailsSidebar
-            notification={selectedNotification}
-            isOpen={isDetailsSidebarOpen}
-            onClose={() => setIsDetailsSidebarOpen(false)}
-          />
-        }
       >
         <Outlet context={{ onNotificationClick: (notification) => {
           setSelectedNotification(notification);

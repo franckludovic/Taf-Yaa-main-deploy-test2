@@ -119,7 +119,7 @@
   },
 
   "baselayout": {
-  "welcome_title": "مرحبًا بك في Taf’Yaa",
+  "welcome_title": "مرحبًا بك في Taf'Yaa",
   "navbar_status": "شريط التنقل الافتراضي مفعل الآن للاختبار",
   "open_sidebar": "فتح الشريط الجانبي للملف الشخصي",
   "footer": "جميع الحقوق محفوظة"
@@ -195,5 +195,29 @@
     "large": "زر كبير",
     "learn_more": "تعرف على المزيد",
     "full_width": "كامل العرض"
+  },
+
+  "activity": {
+    "all_types": "جميع الأنواع",
+    "person_added": "تم إضافة شخص",
+    "person_edited": "تم تعديل شخص",
+    "person_deleted": "تم حذف شخص",
+    "story_added": "تم إضافة قصة",
+    "story_edited": "تم تعديل قصة",
+    "story_deleted": "تم حذف قصة",
+    "attachment_added": "تم إضافة مرفق",
+    "role_changed": "تم تغيير الدور",
+    "tree_settings_edited": "تم تعديل الإعدادات",
+    "admin_only": "مطلوب صلاحية المدير",
+    "admin_only_desc": "يمكن للمدراء فقط عرض سجل نشاط العائلة.",
+    "export": "تصدير",
+    "search_placeholder": "البحث في الأنشطة...",
+    "filter_by_type": "تصفية حسب النوع",
+    "loading": "جارٍ تحميل الأنشطة...",
+    "no_activities": "لم يتم العثور على أنشطة",
+    "no_filtered_activities": "لا توجد أنشطة تطابق عوامل التصفية الخاصة بك.",
+    "no_activities_desc": "ستظهر الأنشطة هنا عندما يتفاعل أعضاء العائلة مع الشجرة.",
+    "loading_more": "جارٍ التحميل...",
+    "load_more": "تحميل المزيد"
   }
 }

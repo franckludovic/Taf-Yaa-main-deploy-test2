@@ -2,6 +2,7 @@ import React from 'react';
 import '../../styles/PageFrame.css';
 import ProfileSidebar from '../../components/sidebar/ProfileSidebar';
 import InviteDetailsSidebar from '../../components/sidebar/InviteDetailsSidebar';
+import NotificationDetailsSidebar from '../../components/sidebar/NotificationDetailsSidebar';
 
 export default function PageFrame({
   topbar,
@@ -13,7 +14,6 @@ export default function PageFrame({
   footer,
   footerInsideMain = false,
   children,
-  customSidebar, // New prop for custom sidebar component
 }) {
   // Determine if mobile (<=768px)
   const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
@@ -22,6 +22,17 @@ export default function PageFrame({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Remove inline styles when sidebar closes
+  React.useEffect(() => {
+    if (!sidebarOpen) {
+      const sidebarEl = document.querySelector('.pf-sidebar');
+      if (sidebarEl) {
+        sidebarEl.style.transform = '';
+        sidebarEl.style.transition = '';
+      }
+    }
+  }, [sidebarOpen]);
 
   // Prevent body scroll when sidebar overlays (mobile)
   React.useEffect(() => {
@@ -45,24 +56,27 @@ export default function PageFrame({
           {...sidebarProps}
         />
       );
+    } else if (sidebarContentType === 'notification') {
+      return (
+        <NotificationDetailsSidebar
+          onClose={onSidebarClose}
+          {...sidebarProps}
+        />
+      );
     }
     // Default fallback
     return <ProfileSidebar onClose={onSidebarClose} {...sidebarProps} />;
   };
 
-  // Handle swiping on mobile
+  //Swipe-to-close 
   React.useEffect(() => {
     if (!isMobile || !sidebarOpen) return;
 
     const sidebarEl = document.querySelector('.pf-sidebar');
-    const overlayEl = document.querySelector('.pf-overlay');
-    if (!sidebarEl || !overlayEl) return;
+    if (!sidebarEl) return;
 
-    // Reset any leftover transforms or opacity when reopened
     sidebarEl.style.transform = 'translateX(0)';
-    overlayEl.style.opacity = '0.6';
     sidebarEl.style.transition = '';
-    overlayEl.style.transition = '';
 
     let startX = 0;
     let startY = 0;
@@ -75,51 +89,44 @@ export default function PageFrame({
       startY = e.touches[0].clientY;
       touching = true;
       translating = false;
+
       sidebarEl.style.transition = 'none';
-      overlayEl.style.transition = 'none';
     };
 
     const handleTouchMove = (e) => {
       if (!touching) return;
+
       const touch = e.touches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
 
-      // Ignore vertical or diagonal swipes
+      // Ignore vertical or diagonal
       if (Math.abs(dy) > Math.abs(dx) * 0.5) return;
 
       if (dx < 0) {
         translating = true;
         currentX = dx;
-        const maxDrag = -window.innerWidth * 0.9;
-        const dragX = Math.max(dx, maxDrag);
 
-        // Move sidebar
+        const sidebarWidth = sidebarEl.offsetWidth;
+        const dragX = Math.max(dx, -sidebarWidth - 20);
         sidebarEl.style.transform = `translateX(${dragX}px)`;
-
-        // Adjust overlay opacity dynamically
-        const opacity = Math.max(0, 0.6 + dragX / window.innerWidth);
-        overlayEl.style.opacity = opacity.toFixed(2);
       }
     };
 
     const handleTouchEnd = () => {
       if (!touching) return;
 
-      sidebarEl.style.transition = 'transform 0.35s cubic-bezier(0.25, 1.25, 0.5, 1)';
-      overlayEl.style.transition = 'opacity 0.35s ease';
+      sidebarEl.style.transition =
+        'transform 0.35s cubic-bezier(0.25, 1.25, 0.5, 1)';
 
-      // Fully close if swiped far enough
-      if (currentX < -150) {
-        sidebarEl.style.transform = 'translateX(-100%)';
-        overlayEl.style.opacity = '0';
+      if (currentX < -100) {
+        sidebarEl.style.transform = 'translateX(calc(-100% - 20px))';
+
         setTimeout(() => {
           onSidebarClose?.();
         }, 350);
       } else if (translating) {
-        // Return smoothly with bounce
         sidebarEl.style.transform = 'translateX(0)';
-        overlayEl.style.opacity = '0.6';
       }
 
       touching = false;
@@ -138,10 +145,20 @@ export default function PageFrame({
     };
   }, [isMobile, sidebarOpen, onSidebarClose]);
 
+
+
   return (
     <div className="pf-root">
       {/* Topbar */}
       <div className="pf-topbar">{topbar}</div>
+
+      {/* Backdrop for mobile */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="pf-backdrop"
+          onClick={onSidebarClose}
+        ></div>
+      )}
 
       {/* Body */}
       <div className={'pf-body' + (sidebarOpen && !isMobile ? ' pf-body-sidebar-open' : '')}>
@@ -155,14 +172,10 @@ export default function PageFrame({
             ].join(' ')}
             style={{ width: !isMobile && sidebarOpen ? 350 : undefined }}
           >
-            {customSidebar || renderSidebarContent()}
+            {renderSidebarContent()}
           </aside>
         )}
 
-        {/* Overlay (tap to close) */}
-        {sidebarOpen && isMobile && (
-          <div className="pf-overlay" onClick={onSidebarClose} style={{ opacity: 0.6 }} />
-        )}
 
         {/* Main content + footer wrapper */}
         <div className="pf-main-footer-wrapper">

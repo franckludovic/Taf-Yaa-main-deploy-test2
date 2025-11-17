@@ -69,7 +69,6 @@ export async function createInviteService({
   return { id: invite.InviteId, ...invite };
 }
 
-// Validate invite code and return invite data with tree info
 export async function validateInviteCode(code) {
   try {
     const response = await fetch('/.netlify/functions/validate-invite', {

@@ -26,7 +26,8 @@
 }
 
 .sidebar-container {
-  width: 336px; /* 320px * 1.05 = 336px */
+  width: 336px; 
+  
   flex-shrink: 0;
   border-right: 1px solid #e5e7eb;
   background: white;
