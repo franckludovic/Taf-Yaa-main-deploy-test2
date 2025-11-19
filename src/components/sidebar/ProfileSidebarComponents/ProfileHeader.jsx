@@ -7,6 +7,7 @@ import { ArrowDownToLine, CircleX } from "lucide-react";
 import FlexContainer from "../../../layout/containers/FlexContainer";
 import ImageCard from "../../../layout/containers/ImageCard";
 import DownloadProfileModal from "./DownloadProfileModal";
+import ProfileExportModal from "./ProfileExportModal";
 
 
 export default function ProfileHeader({
@@ -83,13 +84,13 @@ export default function ProfileHeader({
         }}
       />
 
-      <PDFDownloadModal
+      <ProfileExportModal
         isOpen={pdfModalOpen}
         onClose={() => setPdfModalOpen(false)}
         profileName={profileName}
       />
 
-      <PNGDownloadModal
+      <ProfileExportModal
         isOpen={pngModalOpen}
         onClose={() => setPngModalOpen(false)}
         profileName={profileName}

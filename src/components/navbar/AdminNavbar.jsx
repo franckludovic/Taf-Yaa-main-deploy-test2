@@ -125,6 +125,7 @@ export default function AdminNavbar() {
   const navItems = [
     { label: t('navbar.tree_view'), href: `/family-tree/${currentTreeId}` },
     { label: t('navbar.members'), href: `/family-tree/${currentTreeId}/members` },
+    { label: t('navbar.invites'), href: `/family-tree/${currentTreeId}/invites` },
     { label: t('navbar.notification_center'), href: `/family-tree/${currentTreeId}/notificationcenter` },
     { label: t('navbar.tree_settings'), href: `/family-tree/${currentTreeId}/settings` },
   ];

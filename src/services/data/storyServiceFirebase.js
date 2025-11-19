@@ -16,6 +16,8 @@ import {
 import { db, auth } from '../../config/firebase.js';
 import { generateId } from '../../utils/personUtils/idGenerator.js';
 import dataService from '../dataService.js';
+import { canUserAccessContent } from '../../utils/lineageUtils.js';
+import { checkPermission, ACTIONS, getPermissionErrorMessage } from '../../utils/permissions.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -38,8 +40,30 @@ const calculateContributors = (createdBy, attachments = []) => {
 
 async function addStory(story) {
   try {
-    // Log activity for story creation
     const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for adding story
+    if (story.treeId && story.personId) {
+      const tree = await dataService.getTree(story.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, story.personId, story.treeId, 'add', currentUser.uid);
+        if (!hasAccess) {
+          // For editors, mark story as pending review instead of blocking
+          if (memberData.role === 'editor') {
+            story.pendingReview = true;
+            story.reviewReason = 'Content added for person outside editor\'s lineage';
+          } else {
+            throw new Error(`User ${currentUser.uid} does not have permission to add stories for person ${story.personId}`);
+          }
+        }
+      }
+    }
+
+    // Log activity for story creation
     if (currentUser && story.treeId) {
       const tree = await dataService.getTree(story.treeId);
       const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
@@ -48,7 +72,7 @@ async function addStory(story) {
           story.treeId,
           currentUser.uid,
           memberData.displayName || currentUser.email || 'Unknown User',
-          'story_added',
+          story.pendingReview ? 'story_pending_review' : 'story_added',
           { storyTitle: story.title || 'Untitled', storyId: story.id || generateId("story") }
         );
       }
@@ -94,8 +118,24 @@ async function updateStory(storyId, updatedData) {
       throw new Error("Story not found");
     }
 
-    // Log activity for story update
     const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for updating story
+    if (currentStory.treeId && currentStory.personId) {
+      const tree = await dataService.getTree(currentStory.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, currentStory.personId, currentStory.treeId, 'edit', currentStory.createdBy);
+        if (!hasAccess) {
+          throw new Error(`User ${currentUser.uid} does not have permission to edit this story`);
+        }
+      }
+    }
+
+    // Log activity for story update
     if (currentUser && currentStory.treeId) {
       const tree = await dataService.getTree(currentStory.treeId);
       const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
@@ -154,8 +194,24 @@ async function deleteStory(storyId) {
       throw new Error("Story not found");
     }
 
-    // Log activity for story deletion
     const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for deleting story
+    if (story.treeId && story.personId) {
+      const tree = await dataService.getTree(story.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, story.personId, story.treeId, 'delete', story.createdBy);
+        if (!hasAccess) {
+          throw new Error(`User ${currentUser.uid} does not have permission to delete this story`);
+        }
+      }
+    }
+
+    // Log activity for story deletion
     if (currentUser && story.treeId) {
       const tree = await dataService.getTree(story.treeId);
       const memberData = tree?.members?.find(m => m.userId === currentUser.uid);

@@ -17,7 +17,13 @@ import {
   Venus,
   Image as ImageIcon,
   File,
+  Edit,
+  Trash2,
 } from 'lucide-react';
+import { revokeInvite } from '../../services/inviteService';
+import useModalStore from '../../store/useModalStore';
+import { useAuth } from '../../context/AuthContext';
+
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import FlexContainer from '../../layout/containers/FlexContainer';
@@ -30,13 +36,18 @@ import Modal from '../../layout/containers/Modal';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import Button from '../../components/Button';
 
-const InviteDetailsSidebar = ({ invite, onClose }) => {
+
+const InviteDetailsSidebar = ({ invite, onClose, onInviteUpdated }) => {
   const [fatherName, setFatherName] = useState('');
   const [motherName, setMotherName] = useState('');
   const [treeName, setTreeName] = useState('');
+  const [grantedPersonName, setGrantedPersonName] = useState('');
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [includeOnlyQR, setIncludeOnlyQR] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const addToast = useToastStore((state) => state.addToast);
+  const { openModal } = useModalStore();
+  const { currentUser } = useAuth();
   const publicInfoRef = useRef(null);
   const qrRef = useRef(null);
 
@@ -51,6 +62,10 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
           const mother = await dataService.getPerson(invite.motherId);
           setMotherName(mother?.name || 'Unknown');
         }
+        if (invite?.personId) {
+          const person = await dataService.getPerson(invite.personId);
+          setGrantedPersonName(person?.name || 'Unknown');
+        }
         if (invite?.treeId) {
           const tree = await dataService.getTree(invite.treeId);
           setTreeName(tree?.familyName || 'Unknown');
@@ -58,10 +73,11 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
       } catch {
         setFatherName('Error');
         setMotherName('Error');
+        setGrantedPersonName('Error');
         setTreeName('Error');
       }
     };
-    if (invite?.type === 'targeted' || invite?.treeId) fetchData();
+    if (invite?.type === 'targeted' || invite?.type === 'grant' || invite?.treeId) fetchData();
   }, [invite]);
 
   if (!invite) return null;
@@ -73,6 +89,42 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
 
   const openDownloadModal = () => {
     setShowDownloadModal(true);
+  };
+
+  const handleCancelInvite = async () => {
+    openModal('confirmationModal', {
+      title: 'Cancel Invitation',
+      message: 'Are you sure you want to cancel this invitation? This action cannot be undone. All unconfirmed join requests by this invitation will become invalid.',
+      confirmText: 'Cancel Invitation',
+      cancelText: 'Keep Invitation',
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await revokeInvite(invite.id, invite.treeId, currentUser.uid, currentUser.displayName || currentUser.email);
+          addToast('Invitation cancelled successfully', 'success');
+          if (onInviteUpdated) onInviteUpdated();
+          onClose();
+        } catch (error) {
+          console.error('Failed to cancel invite:', error);
+          addToast('Failed to cancel invitation', 'error');
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    });
+  };
+
+  const handleEditInvite = () => {
+    openModal('inviteModal', {
+      invite,
+      treeId: invite.treeId,
+      inviteType: invite.type,
+      onInviteCreated: (_updatedInvite) => {
+        addToast('Invitation updated successfully', 'success');
+        if (onInviteUpdated) onInviteUpdated();
+        onClose();
+      }
+    });
   };
 
 
@@ -146,6 +198,8 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
     setShowDownloadModal(false);
   };
 
+
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -166,7 +220,7 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
       className=" top-0 h-full w-full  bg-[#f6f8f6] shadow-xl border-gray-200 flex flex-col items-center"
     >
       
-      <div className="flex items-center justify-between w-full py-2 border-b border-gray-200 sticky top-0 bg-[#f6f8f6] z-10">
+        <div className="flex items-center justify-between w-full py-2 border-b border-gray-200 sticky top-0 bg-[#f6f8f6] z-10">
         <Card
           onClick={onClose}
           backgroundColor='var(--color-transparent)'
@@ -179,15 +233,38 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
         <h2 className="text-[13px] font-semibold text-gray-900 truncate max-w-[160px] text-center">
           Invitation #{invite.code}
         </h2>
-        <Card
-          onClick={openDownloadModal}
-          backgroundColor='var(--color-transparent)'
-          rounded
-          size={30}
-          className="p-1.5 rounded-full hover:bg-gray-200 transition"
-        >
-          <ArrowDownToLine scale={20} color='blue' />
-        </Card>
+        <div className="flex items-center gap-1">
+          <Card
+            onClick={handleEditInvite}
+            backgroundColor='var(--color-transparent)'
+            rounded
+            size={30}
+            className="p-1.5 rounded-full hover:bg-gray-200 transition"
+            title="Edit invitation"
+          >
+            <Edit size={16} color='green' />
+          </Card>
+          <Card
+            onClick={handleCancelInvite}
+            backgroundColor='var(--color-transparent)'
+            rounded
+            size={30}
+            className="p-1.5 rounded-full hover:bg-gray-200 transition"
+            title="Cancel invitation"
+            disabled={isDeleting}
+          >
+            <Trash2 size={16} color='red' />
+          </Card>
+          <Card
+            onClick={openDownloadModal}
+            backgroundColor='var(--color-transparent)'
+            rounded
+            size={30}
+            className="p-1.5 rounded-full hover:bg-gray-200 transition"
+          >
+            <ArrowDownToLine size={20} color='blue' />
+          </Card>
+        </div>
       </div>
 
       
@@ -270,6 +347,20 @@ const InviteDetailsSidebar = ({ invite, onClose }) => {
                     </span>
                   </div>
                 </Row>
+              </div>
+            )}
+
+            {/* GRANT DETAILS */}
+            {invite.type === 'grant' && (
+              <div className="pt-1 border-t border-gray-200 text-[11px] space-y-1">
+                <p className="text-gray-600 font-medium">Grant Details</p>
+                <div className="flex items-center gap-1.5">
+                  <UserCircle className="w-3.5 h-3.5 text-gray-500" />
+                  <span className="text-gray-600">Granted to:</span>
+                  <span className="font-semibold text-gray-900">
+                    {grantedPersonName || 'N/A'}
+                  </span>
+                </div>
               </div>
             )}
           </div>

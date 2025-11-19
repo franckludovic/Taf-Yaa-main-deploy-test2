@@ -12,6 +12,9 @@ export const ACTIVITY_TYPES = {
   ATTACHMENT_ADDED: 'attachment_added',
   ROLE_CHANGED: 'role_changed',
   TREE_SETTINGS_EDITED: 'tree_settings_edited',
+  INVITE_CREATED: 'invite_created',
+  INVITE_EDITED: 'invite_edited',
+  INVITE_REVOKED: 'invite_revoked',
 } as const;
 
 export type ActivityType = typeof ACTIVITY_TYPES[keyof typeof ACTIVITY_TYPES];
@@ -52,12 +55,37 @@ export interface TreeSettingsActivityDetails {
   newValues?: Record<string, any>;
 }
 
+export interface InviteRevokedActivityDetails {
+  inviteId: string;
+  inviteCode: string;
+  inviteType: string;
+  inviteRole: string;
+}
+
+export interface InviteCreatedActivityDetails {
+  inviteId: string;
+  inviteCode: string;
+  inviteType: string;
+  inviteRole: string;
+}
+
+export interface InviteEditedActivityDetails {
+  inviteId: string;
+  inviteCode: string;
+  inviteType: string;
+  inviteRole: string;
+  changedFields: string[];
+}
+
 export type ActivityDetails =
   | PersonActivityDetails
   | StoryActivityDetails
   | AttachmentActivityDetails
   | RoleChangeActivityDetails
-  | TreeSettingsActivityDetails;
+  | TreeSettingsActivityDetails
+  | InviteRevokedActivityDetails
+  | InviteCreatedActivityDetails
+  | InviteEditedActivityDetails;
 
 export interface Activity {
   id: string;
@@ -111,6 +139,10 @@ export function getActivityIcon(activityType: ActivityType): string {
       return '👑';
     case ACTIVITY_TYPES.TREE_SETTINGS_EDITED:
       return '⚙️';
+    case ACTIVITY_TYPES.INVITE_CREATED:
+    case ACTIVITY_TYPES.INVITE_EDITED:
+    case ACTIVITY_TYPES.INVITE_REVOKED:
+      return '📨';
     default:
       return '📝';
   }
@@ -148,13 +180,22 @@ export function getActivityDescription(activity: Activity): string {
     case ACTIVITY_TYPES.TREE_SETTINGS_EDITED:
       const settingsDetails = details as TreeSettingsActivityDetails;
       return `${userName} updated tree settings: ${settingsDetails.changedFields.join(', ')}`;
+    case ACTIVITY_TYPES.INVITE_CREATED:
+      const inviteCreatedDetails = details as InviteCreatedActivityDetails;
+      return `${userName} created invite: ${inviteCreatedDetails.inviteCode} (${inviteCreatedDetails.inviteType} - ${inviteCreatedDetails.inviteRole})`;
+    case ACTIVITY_TYPES.INVITE_EDITED:
+      const inviteEditedDetails = details as InviteEditedActivityDetails;
+      return `${userName} edited invite: ${inviteEditedDetails.inviteCode} (${inviteEditedDetails.inviteType} - ${inviteEditedDetails.inviteRole})`;
+    case ACTIVITY_TYPES.INVITE_REVOKED:
+      const inviteRevokedDetails = details as InviteRevokedActivityDetails;
+      return `${userName} revoked invite: ${inviteRevokedDetails.inviteCode} (${inviteRevokedDetails.inviteType} - ${inviteRevokedDetails.inviteRole})`;
     default:
       return `${userName} performed an action: ${activityType}`;
   }
 }
 
 // Get activity variant for styling
-export function getActivityVariant(activityType: ActivityType): 'person' | 'story' | 'attachment' | 'role' | 'settings' {
+export function getActivityVariant(activityType: ActivityType): 'person' | 'story' | 'attachment' | 'role' | 'settings' | 'invite' {
   switch (activityType) {
     case ACTIVITY_TYPES.PERSON_ADDED:
     case ACTIVITY_TYPES.PERSON_EDITED:
@@ -170,6 +211,10 @@ export function getActivityVariant(activityType: ActivityType): 'person' | 'stor
       return 'role';
     case ACTIVITY_TYPES.TREE_SETTINGS_EDITED:
       return 'settings';
+    case ACTIVITY_TYPES.INVITE_CREATED:
+    case ACTIVITY_TYPES.INVITE_EDITED:
+    case ACTIVITY_TYPES.INVITE_REVOKED:
+      return 'invite';
     default:
       return 'person';
   }

@@ -19,6 +19,8 @@ import { marriageServiceFirebase } from './marriageServiceFirebase.js';
 import { eventServiceFirebase } from './eventServiceFirebase.js';
 import { storyServiceFirebase } from './storyServiceFirebase.js';
 import dataService from '../dataService.js';
+import { canUserAccessPerson } from '../../utils/lineageUtils.js';
+import { checkPermission, ACTIONS, getPermissionErrorMessage } from '../../utils/permissions.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -74,6 +76,13 @@ async function addPerson(person) {
       throw new Error(`User ${currentUser.uid} has role '${memberData.role}' which is not allowed to create people in tree ${person.treeId}`);
     }
 
+    // For editors, check lineage restrictions - they can only add people to their lineage
+    if (memberData.role === 'editor') {
+      // When adding a person, we need to check if they have permission to add to the specified parent
+      // This will be checked in the controller based on the parent relationship
+      // For now, we'll allow the creation but restrict based on parent in the UI/controller
+    }
+
     const personRef = doc(db, "people", person.id);
     const personData = {
       ...person,
@@ -110,7 +119,21 @@ async function getPerson(id) {
     const personSnap = await getDoc(personRef);
 
     if (personSnap.exists()) {
-      return { id: personSnap.id, ...personSnap.data() };
+      const person = { id: personSnap.id, ...personSnap.data() };
+
+      // Check lineage restrictions for editors
+      const currentUser = auth.currentUser;
+      if (currentUser && person.treeId) {
+        const tree = await dataService.getTree(person.treeId);
+        const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+        if (memberData && memberData.role === 'editor') {
+          if (!(await canUserAccessPerson(currentUser.uid, memberData.role, id, person.treeId, 'view'))) {
+            throw new Error(`Editor ${currentUser.uid} does not have access to person ${id} (not in their lineage)`);
+          }
+        }
+      }
+
+      return person;
     } else {
       return null;
     }
@@ -684,11 +707,29 @@ async function findPeopleByName(query) {
   }
 }
 
-async function getPeopleByTreeId(treeId) {
+async function getPeopleByTreeId(treeId, bypassMembershipCheck = false) {
   try {
-    console.log('getPeopleByTreeId called with treeId:', treeId, 'User:', auth.currentUser?.uid);
+    console.log('getPeopleByTreeId called with treeId:', treeId, 'User:', auth.currentUser?.uid, 'bypassMembershipCheck:', bypassMembershipCheck);
     if (!treeId) {
       return [];
+    }
+
+    // Skip membership check if bypassMembershipCheck is true (for join requests)
+    if (!bypassMembershipCheck) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Check tree membership
+      const tree = await dataService.getTree(treeId);
+      if (!tree) {
+        throw new Error(`Tree ${treeId} not found`);
+      }
+
+      if (!tree.memberUIDs?.includes(currentUser.uid)) {
+        throw new Error(`User ${currentUser.uid} is not a member of tree ${treeId}`);
+      }
     }
 
     const peopleRef = collection(db, 'people');
@@ -716,6 +757,22 @@ async function getPeopleByTreeId(treeId) {
     placeholderSnapshot.forEach((doc) => {
       results.push({ id: doc.id, ...doc.data() });
     });
+
+    // Apply lineage restrictions for editors (only if user is a member)
+    if (!bypassMembershipCheck) {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const tree = await dataService.getTree(treeId);
+        const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+        if (memberData && memberData.role === 'editor') {
+          const accessPromises = results.map(person => canUserAccessPerson(currentUser.uid, memberData.role, person.id, treeId, 'view'));
+          const accessResults = await Promise.all(accessPromises);
+          const filteredResults = results.filter((_, index) => accessResults[index]);
+          return filteredResults;
+        }
+      }
+    }
+
     return results;
   } catch (error) {
     throw new Error(`Failed to get people by tree ID: ${error.message}`);

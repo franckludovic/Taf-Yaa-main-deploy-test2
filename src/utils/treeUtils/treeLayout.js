@@ -465,15 +465,24 @@ visibleMarriages.forEach((marriage) => {
 export function getDirectLinePeople(people, marriages) {
   const directLineIds = new Set();
 
+  console.log('getDirectLinePeople: Input data:', { peopleCount: people.length, marriagesCount: marriages.length });
+  console.log('getDirectLinePeople: Marriages:', marriages);
+
   marriages.forEach(marriage => {
-    if (marriage.isDeleted) return; // skip deleted records
+    console.log('getDirectLinePeople: Processing marriage:', marriage);
+    if (marriage.isDeleted) {
+      console.log('getDirectLinePeople: Skipping deleted marriage');
+      return; // skip deleted records
+    }
 
     if (marriage.marriageType === "monogamous") {
       const [spouseA, spouseB] = marriage.spouses || [];
-      // both spouses are direct-line if there are children
+      console.log('getDirectLinePeople: Monogamous marriage spouses:', spouseA, spouseB);
+      // Add both spouses to direct line (they can be parents even without children yet)
+      if (spouseA) directLineIds.add(spouseA);
+      if (spouseB) directLineIds.add(spouseB);
+      // Add children if they exist
       if (marriage.childrenIds?.length > 0) {
-        if (spouseA) directLineIds.add(spouseA);
-        if (spouseB) directLineIds.add(spouseB);
         marriage.childrenIds.forEach(id => directLineIds.add(id));
       }
     }
@@ -482,18 +491,22 @@ export function getDirectLinePeople(people, marriages) {
       const husbandId = marriage.husbandId;
       const wives = marriage.wives || [];
 
+      console.log('getDirectLinePeople: Polygamous marriage husband:', husbandId, 'wives:', wives);
+      // Add husband to direct line
+      if (husbandId) directLineIds.add(husbandId);
+
       wives.forEach(wife => {
-        const hasChildren = wife.childrenIds?.length > 0;
-        if (hasChildren) {
-          // husband and this wife are both direct-line
-          if (husbandId) directLineIds.add(husbandId);
-          if (wife.wifeId) directLineIds.add(wife.wifeId);
-          // and their children too
+        // Add wife to direct line
+        if (wife.wifeId) directLineIds.add(wife.wifeId);
+        // Add children if they exist
+        if (wife.childrenIds?.length > 0) {
           wife.childrenIds.forEach(id => directLineIds.add(id));
         }
       });
     }
   });
+
+  console.log('getDirectLinePeople: Direct line IDs collected:', Array.from(directLineIds));
 
   // Find the root (highest ancestor) among direct line people
   let rootId = null;

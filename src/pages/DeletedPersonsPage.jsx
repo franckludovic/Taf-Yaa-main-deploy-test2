@@ -72,7 +72,7 @@ const DeletedPersonsPage = () => {
             );
             affectedCount = batchPersons.length - 1;
 
-            const marriages = await dataService.getAllMarriages();
+            const marriages = await dataService.getAllMarriages(treeId);
             const batchMarriages = marriages.filter(
               m => m.deletionBatchId === person.deletionBatchId && m.pendingDeletion
             );

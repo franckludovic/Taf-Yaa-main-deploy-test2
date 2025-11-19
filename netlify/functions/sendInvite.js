@@ -39,7 +39,7 @@ export async function handler(event) {
     // Construct the message
     const mailOptions = {
       from: `Taf'yaa <${process.env.SMTP_USER}>`,
-      to:   ``,
+      to: recipientEmail,
       subject: `🌳 You're invited to join the "${treeName || 'Family Tree'}" family on Taf'yaa!`,
       html: `
         <div style="font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; padding: 5px;">

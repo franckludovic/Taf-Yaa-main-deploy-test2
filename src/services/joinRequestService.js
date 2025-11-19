@@ -8,7 +8,6 @@ import {
   query,
   where,
   getDocs,
-  runTransaction,
   updateDoc,
   getDoc,
 } from 'firebase/firestore';
@@ -88,6 +87,11 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
 
   const invite = inviteDoc.data();
 
+  // Check if invite is revoked
+  if (invite.status === 'revoked') {
+    throw new Error('This invitation has been revoked and cannot be used to accept join requests');
+  }
+
   // Lazy imports for heavy modules
   const dataService = (await import('../services/dataService')).default;
   const { addChild } = await import('../controllers/tree/addChild');
@@ -97,6 +101,24 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
 
   if (!parentId) {
     throw new Error('Join request must specify at least one parent');
+  }
+
+  // Check if parent is already in a marriage
+  let marriageId = null;
+  let motherId = null;
+  const existingMarriages = await dataService.getMarriagesByPersonId(parentId);
+  const existingMonogamous = existingMarriages.find(m => m.marriageType === 'monogamous');
+  const existingPolygamous = existingMarriages.find(m => m.marriageType === 'polygamous');
+
+  if (existingMonogamous) {
+    marriageId = existingMonogamous.id;
+  } else if (existingPolygamous) {
+    marriageId = existingPolygamous.id;
+    // For polygamous marriages, use the specified mother if available
+    if (joinRequest.claimedMotherId) {
+      motherId = joinRequest.claimedMotherId;
+    }
+    // If no specific mother is claimed, leave motherId undefined so addChild creates a placeholder
   }
 
   // Prepare child data
@@ -111,8 +133,10 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
 
   // Create person + link using addChild
   const result = await addChild(joinRequest.treeId, {
+    marriageId,
     parentId,
     childData,
+    motherId,
     createdBy: reviewedBy,
   });
 

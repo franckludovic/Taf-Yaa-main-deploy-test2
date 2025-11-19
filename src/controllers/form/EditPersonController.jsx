@@ -4,6 +4,9 @@ import EditPersonForm from '../../components/Edit Person/EditPersonForm.jsx';
 import dataService from '../../services/dataService.js';
 import useToastStore from '../../store/useToastStore.js';
 import useModalStore from '../../store/useModalStore.js';
+import { checkPermission, getPermissionErrorMessage, ACTIONS } from '../../utils/permissions.js';
+import { useUserRole } from '../../hooks/useUserRole.js';
+import { auth } from '../../config/firebase.js';
 
 const EditPersonController = ({ personId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(true);
@@ -13,6 +16,7 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
 
   const addToast = useToastStore((state) => state.addToast);
   const { closeModal } = useModalStore();
+  const { userRole } = useUserRole(formData?.person?.treeId);
 
   useEffect(() => {
     const fetchPersonData = async () => {
@@ -61,6 +65,21 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
     setSaving(true); // <-- start saving state
     setError(null);
     try {
+      // Check permission before proceeding
+      const permissionResult = await checkPermission(
+        auth.currentUser?.uid || "anonymous",
+        userRole,
+        ACTIONS.EDIT_PERSON,
+        personId,
+        formData.person.treeId
+      );
+
+      if (!permissionResult.allowed) {
+        const errorMessage = getPermissionErrorMessage(permissionResult);
+        setError(errorMessage);
+        addToast(errorMessage, "error");
+        return;
+      }
       const {
         fullName,
         gender,

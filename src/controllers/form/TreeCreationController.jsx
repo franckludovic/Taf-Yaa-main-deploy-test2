@@ -6,6 +6,8 @@ import { addTree } from "../tree/addTree.js";
 import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js";
 import LottieLoader from "../../components/LottieLoader";
+import { checkPermission, getPermissionErrorMessage, ACTIONS } from "../../utils/permissions.js";
+import { auth } from "../../config/firebase.js";
 
 const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false, treeToEdit = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,6 +30,22 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
         closeModal("treeModal");
         return;
       } else {
+        // Check permission before proceeding
+        const permissionResult = await checkPermission(
+          auth.currentUser?.uid || "anonymous",
+          null, // No user role needed for tree creation
+          ACTIONS.CREATE_TREE,
+          null, // No target person
+          null  // No tree ID for creation
+        );
+
+        if (!permissionResult.allowed) {
+          const errorMessage = getPermissionErrorMessage(permissionResult);
+          setError(errorMessage);
+          addToast(errorMessage, "error");
+          return;
+        }
+
         result = await addTree(formData, {
           createdBy,
           onError: (msg, type) => addToast(msg, type || "error"),

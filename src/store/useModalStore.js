@@ -12,7 +12,7 @@ const useModalStore = create((set) => ({
     addParentModal: false,
     treeModal: false,
     confirmationModal: false,
-    editPerson: false,  
+    editPerson: false,
     editMember: false,
     editMemberRole: false,
     banMemberModal: false,
@@ -25,6 +25,8 @@ const useModalStore = create((set) => ({
     joinModal: false,
     pendingRequestDetailsModal: false,
     grantMembershipModal: false,
+    inviteTypeModal: false,
+    inviteModal: false,
   },
 
   // Modal data
@@ -97,6 +99,17 @@ const useModalStore = create((set) => ({
       treeId: null,
       treeName: null,
       onMembershipGranted: null,
+    },
+    inviteTypeModal: {
+      onSelectType: null,
+    },
+    inviteModal: {
+      treeId: null,
+      inviteType: null,
+      onInviteCreated: null,
+      onNavigate: null,
+      person: null,
+      invite: null,
     },
   },
 

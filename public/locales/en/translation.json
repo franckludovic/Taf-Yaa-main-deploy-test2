@@ -2,8 +2,9 @@
   "navbar": {
     "tree_view": "Family Tree",
     "members": "Members",
+    "invites": "Invites",
     "notifications": "Notifications",
-    "notification_center": "Notification Center",
+    "notification_center": "Notifications",
     "suggestions": "Suggestions",
     "export": "Export",
     "settings": "Settings",

@@ -25,7 +25,7 @@ export default function ProfileExportModal({ isOpen, onClose, profileName }) {
       if (selectedFormat === 'pdf') {
         const imgData = canvas.toDataURL('image/png')
         const pdf = new jsPDF({
-          orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+          orientation: 'landscape', // Always use landscape for better table visibility
           unit: 'px',
           format: [canvas.width, canvas.height]
         })

@@ -5,6 +5,9 @@ import { addChild } from "../tree/addChild";
 import dataService from "../../services/dataService.js";
 import LottieLoader from "../../components/LottieLoader.jsx";
 import { auth } from "../../config/firebase.js";
+import { checkPermission, getPermissionErrorMessage, ACTIONS } from "../../utils/permissions.js";
+import { useUserRole } from "../../hooks/useUserRole.js";
+import useToastStore from "../../store/useToastStore.js";
 
 const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -18,6 +21,9 @@ const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
   });
   const [parent, setParent] = useState(null);
   const [parentMarriage, setParentMarriage] = useState(null);
+
+  const { userRole } = useUserRole(treeId);
+  const addToast = useToastStore((state) => state.addToast);
 
 
   useEffect(() => {
@@ -80,6 +86,22 @@ const AddChildController = ({ treeId, parentId, onSuccess, onCancel }) => {
     setLoading(true);
     setError(null);
     try {
+      // Check permission before proceeding
+      const permissionResult = await checkPermission(
+        auth.currentUser?.uid || "anonymous",
+        userRole,
+        ACTIONS.CREATE_PERSON,
+        parentId,
+        treeId
+      );
+
+      if (!permissionResult.allowed) {
+        const errorMessage = getPermissionErrorMessage(permissionResult);
+        setError(errorMessage);
+        addToast(errorMessage, "error");
+        return;
+      }
+
       const options = {
         childData: formData,
         marriageId: parentMarriage ? parentMarriage.id : null,

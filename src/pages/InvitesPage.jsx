@@ -8,12 +8,13 @@ import Column from '../layout/containers/Column';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
 import { useAuth } from '../context/AuthContext';
-import { getInvitesForUser } from '../services/inviteService';
+import { getInvitesForUser, revokeInvite } from '../services/inviteService';
 import useToastStore from '../store/useToastStore';
 import useSidebarStore from '../store/useSidebarStore';
 import InviteDetailsSidebar from '../components/sidebar/InviteDetailsSidebar';
 import useModalStore from '../store/useModalStore';
-import { useFamilyData } from '../hooks/useFamilyData';
+
+
 import { Mail, QrCode, Copy, Eye, EyeOff, Trash2, Calendar, Users, UserCheck } from 'lucide-react';
 
 const InvitesPage = () => {
@@ -22,11 +23,10 @@ const InvitesPage = () => {
   const navigate = useNavigate();
   const addToast = useToastStore(state => state.addToast);
   const openInviteSidebar = useSidebarStore(state => state.openInviteSidebar);
-  const {reload} = useFamilyData;
   const [invites, setInvites] = useState([]);
-  const {openModal, closeModal} = useModalStore
+  const {openModal, closeModal} = useModalStore()
   const [loading, setLoading] = useState(true);
-  const [showQR, setShowQR] = useState({});
+
 
   useEffect(() => {
     if (currentUser) {
@@ -71,7 +71,7 @@ const InvitesPage = () => {
           inviteType: type,
           onInviteCreated: (invite) => {
             console.log('Invitation created:', invite);
-            reload();
+            loadInvites(); // Reload invites after creation
           },
           onNavigate: (path) => navigate(path)
         });
@@ -97,6 +97,25 @@ const InvitesPage = () => {
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     addToast('Join link copied to clipboard', 'success');
+  };
+
+  const handleRevokeInvite = (invite) => {
+    openModal('confirmationModal', {
+      title: 'Revoke Invitation',
+      message: 'Are you sure you want to revoke this invitation? This action cannot be undone. All unconfirmed join requests by this invitation will become invalid.',
+      confirmText: 'Revoke Invitation',
+      cancelText: 'Keep Invitation',
+      onConfirm: async () => {
+        try {
+          await revokeInvite(invite.id, invite.treeId, currentUser.uid, currentUser.displayName || currentUser.email);
+          addToast('Invitation revoked successfully', 'success');
+          loadInvites(); // Reload invites after revocation
+        } catch (error) {
+          console.error('Failed to revoke invite:', error);
+          addToast('Failed to revoke invitation', 'error');
+        }
+      }
+    });
   };
 
 
@@ -128,7 +147,9 @@ const InvitesPage = () => {
       filterable: true,
       render: (row) => (
         <Text variant="body2" style={{ textTransform: 'capitalize' }}>
-          {row.type === 'targeted' ? '🎯 Targeted' : '🌐 Non-Targeted'}
+          {row.type === 'targeted' ? '🎯 Targeted' :
+           row.type === 'grant' ? '🎁 Grant' :
+           '🌐 Non-Targeted'}
         </Text>
       )
     },
@@ -201,11 +222,16 @@ const InvitesPage = () => {
           >
             <Eye size={14} />
           </Button>
-          {row?.qrDataUrl && showQR[row.id] && (
-            <div style={{ position: 'absolute', background: 'white', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', zIndex: 1000 }}>
-              <img src={row.qrDataUrl} alt="QR Code" style={{ width: '100px', height: '100px' }} />
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="small"
+            onClick={() => handleRevokeInvite(row)}
+            title="Revoke invite"
+            disabled={row.status === 'revoked'}
+          >
+            <Trash2 size={14} />
+          </Button>
+
         </Row>
       )
     }

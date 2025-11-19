@@ -66,6 +66,22 @@ export async function createInviteService({
   // Save to Firestore
   const inviteRef = doc(collection(db, 'invites'), invite.InviteId);
   await setDoc(inviteRef, invite);
+
+  // Log activity for invite creation
+  const activityService = (await import('./activityService')).default;
+  await activityService.logActivity(
+    treeId,
+    createdBy,
+    '', // userName will be resolved in the service
+    'invite_created',
+    {
+      inviteId: invite.InviteId,
+      inviteCode: code,
+      inviteType: type,
+      inviteRole: role,
+    }
+  );
+
   return { id: invite.InviteId, ...invite };
 }
 
@@ -126,10 +142,75 @@ export async function getInvitesForTree(treeId) {
   }
 }
 
+
+
+// Update an invite
+export async function updateInviteService({
+  id,
+  treeId,
+  type,
+  role,
+  fatherId = null,
+  motherId = null,
+  personId = null,
+  usesAllowed = 1,
+  expiresAt,
+  notes,
+}) {
+  const inviteRef = doc(collection(db, 'invites'), id);
+  const updateData = {
+    type,
+    role,
+    fatherId,
+    motherId,
+    personId,
+    usesAllowed,
+    expiresAt,
+    notes,
+    updatedAt: new Date().toISOString()
+  };
+
+  await updateDoc(inviteRef, updateData);
+
+  // Log activity for invite editing
+  const activityService = (await import('./activityService')).default;
+  await activityService.logActivity(
+    treeId,
+    '', // userId will be resolved in the service
+    '', // userName will be resolved in the service
+    'invite_edited',
+    {
+      inviteId: id,
+      inviteCode: '', // Will need to be passed or fetched
+      inviteType: type,
+      inviteRole: role,
+      changedFields: Object.keys(updateData),
+    }
+  );
+
+  // Return the updated invite data
+  return { id, ...updateData };
+}
+
 // Revoke an invite
-export async function revokeInvite(inviteId) {
+export async function revokeInvite(inviteId, treeId, userId, userName) {
   const inviteRef = doc(collection(db, 'invites'), inviteId);
   await updateDoc(inviteRef, { status: 'revoked', updatedAt: new Date().toISOString() });
+
+  // Log activity for invite revocation
+  const activityService = (await import('./activityService')).default;
+  await activityService.logActivity(
+    treeId,
+    userId,
+    userName,
+    'invite_revoked',
+    {
+      inviteId: inviteId,
+      inviteCode: '', // Will be fetched from invite data if needed
+      inviteType: '', // Will be fetched from invite data if needed
+      inviteRole: '', // Will be fetched from invite data if needed
+    }
+  );
 }
 
 // Get invites created by a specific user

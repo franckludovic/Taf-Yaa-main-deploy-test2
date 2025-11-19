@@ -9,7 +9,7 @@ import Spacer from '../Spacer';
 import SelectDropdown from '../SelectDropdown';
 import DateInput from '../DateInput';
 import { TextInput, TextArea } from '../Input';
-import { createInviteService } from '../../services/inviteService';
+import { createInviteService, updateInviteService } from '../../services/inviteService';
 import dataService from '../../services/dataService';
 import useToastStore from '../../store/useToastStore';
 import { useAuth } from '../../context/AuthContext';
@@ -17,7 +17,7 @@ import { getDirectLinePeople, getSpouseOptions } from '../../utils/treeUtils/tre
 
 import { Calendar, Users, FileText } from 'lucide-react';
 
-const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onNavigate, person }) => {
+const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onNavigate, person, invite }) => {
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     role: 'viewer',
@@ -57,6 +57,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
           setPeople(peopleData || []);
           setMarriages(marriagesData || []);
           const directLine = getDirectLinePeople(peopleData || [], marriagesData || []);
+          console.log('InviteModal: Loaded data:', { peopleData, marriagesData, directLine });
           setDirectLinePeople(directLine);
         } catch (err) {
           console.error('Failed to load data:', err);
@@ -69,19 +70,33 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        role: 'viewer',
-        selectedParentId: null,
-        selectedSpouseId: null,
-        fatherId: null,
-        motherId: null,
-        usesAllowed: 1,
-        expiresAt: '',
-        notes: ''
-      });
+      if (invite) {
+        // Pre-fill form with invite data for editing
+        setFormData({
+          role: invite.role || 'viewer',
+          selectedParentId: invite.fatherId || invite.motherId || null,
+          selectedSpouseId: invite.fatherId && invite.motherId ? (invite.fatherId === invite.fatherId ? invite.motherId : invite.fatherId) : null,
+          fatherId: invite.fatherId || null,
+          motherId: invite.motherId || null,
+          usesAllowed: invite.usesAllowed || 1,
+          expiresAt: invite.expiresAt ? (invite.expiresAt.seconds ? new Date(invite.expiresAt.seconds * 1000).toISOString().split('T')[0] : new Date(invite.expiresAt).toISOString().split('T')[0]) : '',
+          notes: invite.notes || ''
+        });
+      } else {
+        setFormData({
+          role: 'viewer',
+          selectedParentId: null,
+          selectedSpouseId: null,
+          fatherId: null,
+          motherId: null,
+          usesAllowed: 1,
+          expiresAt: '',
+          notes: ''
+        });
+      }
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, invite]);
 
   // Handle parent selection change
   useEffect(() => {
@@ -185,19 +200,20 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
         personId: inviteType === 'grant' ? person?.id : null,
         usesAllowed: formData.usesAllowed,
         expiresAt: formData.expiresAt && formData.expiresAt.trim() !== '' ? formData.expiresAt : null,
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        ...(invite && { id: invite.id }) // Include ID for updates
       };
 
-      const invite = await createInviteService(inviteData);
-      addToast('Invitation created successfully!', 'success');
+      const resultInvite = invite ? await updateInviteService(inviteData) : await createInviteService(inviteData);
+      addToast(invite ? 'Invitation updated successfully!' : 'Invitation created successfully!', 'success');
 
       if (onInviteCreated) {
-        onInviteCreated(invite);
+        onInviteCreated(resultInvite);
       }
 
       // Navigate to invites page with the new invite ID to auto-open details
       if (onNavigate) {
-        onNavigate(`/family-tree/${treeId}/invites/${invite.id}`);
+        onNavigate(`/family-tree/${treeId}/invites/${resultInvite.id}`);
       }
 
       onClose();
@@ -236,7 +252,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxHeight="90vh">
       <Column margin='25px 0px 0px 0px' padding='0px' gap='1rem'>
-        <Text as="h2" variant="h3" bold>Create Invitation</Text>
+        <Text as="h2" variant="h3" bold>{invite ? 'Edit Invitation' : 'Create Invitation'}</Text>
         <Text variant="caption" color="gray-dark">
           {inviteType === 'targeted'
             ? 'Pre-select parents for the invitee. The form will have pre-filled father and mother fields.'
@@ -347,7 +363,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
               Cancel
             </Button>
             <Button fullWidth variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Invitation'}
+              {isSubmitting ? (invite ? 'Updating...' : 'Creating...') : (invite ? 'Update Invitation' : 'Create Invitation')}
             </Button>
           </Row>
         </Column>

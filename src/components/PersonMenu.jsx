@@ -4,21 +4,21 @@ import usePersonMenuStore from '../store/usePersonMenuStore';
 import useModalStore from '../store/useModalStore';
 import dataService from '../services/dataService';
 import useToastStore from '../store/useToastStore';
-import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { ListCollapse, CircleUserRound, MapPinHouse, GitCompareArrows, UserRoundPlus, UserRoundPen, Heart, Baby, Users, User, ChevronRight, Undo2 } from 'lucide-react';
 import '../styles/PersonMenu.css';
 
-function PersonMenu({ treeId, treeData, handleToggleCollapse, handleOpenProfile, handleTraceLineage, handleSetAsRoot, onAddSpouse, onAddChild, onAddParent, onEditPerson, onDeleteComplete }) {
+function PersonMenu({ treeId, _treeData, handleToggleCollapse, handleOpenProfile, handleTraceLineage, handleSetAsRoot, onAddSpouse, onAddChild, onAddParent, onEditPerson, onDeleteComplete }) {
   const { isOpen, targetNodeId, position, actions, targetPerson } = usePersonMenuStore();
   const menuRef = useRef(null);
   const [showSubmenu, setShowSubmenu] = useState(false);
   const submenuRef = useRef(null);
   const [isSpouse, setIsSpouse] = useState(false);
   const [isSoftDeleted, setIsSoftDeleted] = useState(false);
+  const { permissions } = usePermissions(treeId);
   const addToast = useToastStore(state => state.addToast);
-  const { currentUser } = useAuth();
-  const [userRole, setUserRole] = useState(null);
-  const [isMember, setIsMember] = useState(false);
+
+  console.log('PersonMenu treeId:', treeId, 'canCreatePerson:', permissions.canCreatePerson?.allowed, 'canEditPerson:', permissions.canEditPerson?.allowed, 'canDeletePerson:', permissions.canDeletePerson?.allowed);
 
 
   useEffect(() => {
@@ -64,17 +64,14 @@ function PersonMenu({ treeId, treeData, handleToggleCollapse, handleOpenProfile,
     if (!isOpen || !targetNodeId) {
       setIsSpouse(false);
       setIsSoftDeleted(false);
-      setUserRole(null);
-      setIsMember(false);
       return;
     }
 
-    // Get person data and tree membership info
+    // Get person data
     const personPromise = dataService.getPerson(targetNodeId);
-    const treePromise = treeData ? Promise.resolve(treeData) : dataService.getTree(treeId);
 
-    Promise.all([personPromise, treePromise])
-      .then(([personModel, treeData]) => {
+    personPromise
+      .then((personModel) => {
         if (cancelled) return;
 
         if (personModel) {
@@ -87,38 +84,17 @@ function PersonMenu({ treeId, treeData, handleToggleCollapse, handleOpenProfile,
           setIsSpouse(Boolean(targetPerson && targetPerson.variant === 'spouse'));
           setIsSoftDeleted(Boolean(targetPerson && targetPerson.isSoftDeleted));
         }
-
-        // Check user role and membership
-        if (treeData && currentUser) {
-          const member = treeData.members?.find(m => m.userId === currentUser.uid);
-          console.log('PersonMenu: treeData.members:', treeData.members);
-          console.log('PersonMenu: currentUser.uid:', currentUser.uid);
-          console.log('PersonMenu: found member:', member);
-          if (member) {
-            setUserRole(member.role);
-            setIsMember(true);
-            console.log('PersonMenu: set userRole to:', member.role, 'isMember to true');
-          } else {
-            setUserRole(null);
-            setIsMember(false);
-            console.log('PersonMenu: set userRole to null, isMember to false');
-          }
-        } else {
-          console.log('PersonMenu: treeData or currentUser missing', { treeData: !!treeData, currentUser: !!currentUser });
-        }
       })
       .catch(() => {
         if (cancelled) return;
         setIsSpouse(Boolean(targetPerson && targetPerson.variant === 'spouse'));
         setIsSoftDeleted(Boolean(targetPerson && targetPerson.isSoftDeleted));
-        setUserRole(null);
-        setIsMember(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isOpen, targetNodeId, targetPerson, currentUser]);
+  }, [isOpen, targetNodeId, targetPerson]);
 
   const { openModal } = useModalStore();
 
@@ -244,23 +220,25 @@ function PersonMenu({ treeId, treeData, handleToggleCollapse, handleOpenProfile,
                 <GitCompareArrows size={15} />
                 <span className="person-menu-text">Set as Root</span>
               </button>
-              {/* Only show Add Relative, Edit Person, and Delete Person for members with appropriate roles */}
-              {isMember && (userRole === 'admin' || userRole === 'moderator' || userRole === 'editor') && (
-                <>
-                  <button className="person-menu-item" onClick={toggleSubmenu}>
-                    <UserRoundPlus size={15} />
-                    <span className="person-menu-text">Add Relative</span>
-                    <ChevronRight style={{ marginLeft: 'auto' }} size={15} />
-                  </button>
-                  <button className="person-menu-item" onClick={() => { if (onEditPerson) onEditPerson(targetNodeId); actions.closeMenu(); setShowSubmenu(false); }}>
-                    <UserRoundPen size={15} />
-                    <span className="person-menu-text">Edit Person</span>
-                  </button>
-                  <button className="person-menu-item" onClick={onDelete}>
-                    <User size={15} />
-                    <span className="person-menu-text" style={{ color: '#dc3545' }}>Delete Person</span>
-                  </button>
-                </>
+              {/* Only show Add Relative, Edit Person, and Delete Person for members with appropriate permissions */}
+              {permissions.canCreatePerson?.allowed && (
+                <button className="person-menu-item" onClick={toggleSubmenu}>
+                  <UserRoundPlus size={15} />
+                  <span className="person-menu-text">Add Relative</span>
+                  <ChevronRight style={{ marginLeft: 'auto' }} size={15} />
+                </button>
+              )}
+              {permissions.canEditPerson?.allowed && (
+                <button className="person-menu-item" onClick={() => { if (onEditPerson) onEditPerson(targetNodeId); actions.closeMenu(); setShowSubmenu(false); }}>
+                  <UserRoundPen size={15} />
+                  <span className="person-menu-text">Edit Person</span>
+                </button>
+              )}
+              {permissions.canDeletePerson?.allowed && (
+                <button className="person-menu-item" onClick={onDelete}>
+                  <User size={15} />
+                  <span className="person-menu-text" style={{ color: '#dc3545' }}>Delete Person</span>
+                </button>
               )}
             </>
           )}

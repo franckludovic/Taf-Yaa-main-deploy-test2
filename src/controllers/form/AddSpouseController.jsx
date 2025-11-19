@@ -8,6 +8,8 @@ import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js";
 import LottieLoader from "../../components/LottieLoader";
 import { auth } from "../../config/firebase.js";
+import { checkPermission, getPermissionErrorMessage, ACTIONS } from "../../utils/permissions.js";
+import { useUserRole } from "../../hooks/useUserRole.js";
 
 const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, onSaving }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +20,7 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
   const addToast = useToastStore((state) => state.addToast);
   const { openModal, closeModal } = useModalStore();
   const hasSubmitted = useRef(false);
+  const { userRole } = useUserRole(treeId);
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,6 +85,22 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
     setError(null);
 
     try {
+      // Check permission before proceeding
+      const permissionResult = await checkPermission(
+        auth.currentUser?.uid || "anonymous",
+        userRole,
+        ACTIONS.CREATE_PERSON,
+        existingSpouseId,
+        treeId
+      );
+
+      if (!permissionResult.allowed) {
+        const errorMessage = getPermissionErrorMessage(permissionResult);
+        setError(errorMessage);
+        addToast(errorMessage, "error");
+        return;
+      }
+
       // notify parent modal that saving is starting
       if (typeof onSaving === 'function') onSaving(true);
 
@@ -99,7 +118,7 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
         hasSubmitted.current = true;
         addToast("Spouse added successfully!", "success");
         if (typeof onSuccess === 'function') onSuccess(result);
-        closeModal("addSpouseModal"); 
+        closeModal("addSpouseModal");
       } else if (!result && !hasSubmitted.current) {
         setIsSubmitting(false);
         setError("Operation could not be completed. Please check the rules.");

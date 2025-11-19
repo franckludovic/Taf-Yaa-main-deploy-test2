@@ -81,8 +81,50 @@ const JoinPage = () => {
         navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         return;
       }
+
+      // For grant type invites, directly add the user to the tree without join request
+      if (inviteData.invite.type === 'grant') {
+        handleGrantInvite();
+        return;
+      }
+
       // Navigate to join request form with invite data
       navigate(`/join-request?inviteId=${inviteData.inviteId}&code=${inviteData.invite.code}`);
+    }
+  };
+
+  const handleGrantInvite = async () => {
+    try {
+      // Import the acceptJoinRequest function
+      const { acceptJoinRequest } = await import('../services/joinRequestService');
+
+      // Create a mock join request for grant invites
+      const mockJoinRequest = {
+        treeId: inviteData.invite.treeId,
+        inviteCode: inviteData.invite.code,
+        inviteId: inviteData.inviteId,
+        submittedBy: currentUser.uid,
+        claimedFatherId: inviteData.invite.fatherId || null,
+        claimedMotherId: inviteData.invite.motherId || null,
+        name: currentUser.displayName || currentUser.email || 'Unknown User',
+        gender: 'male', // Default, can be updated later
+        birthDate: null,
+        notes: 'Auto-approved grant membership',
+        proofFiles: [] // No proof files needed for grants
+      };
+
+      // Submit the mock join request
+      const { submitJoinRequest } = await import('../services/joinRequestService');
+      const joinRequest = await submitJoinRequest(mockJoinRequest);
+
+      // Auto-approve the join request
+      await acceptJoinRequest(joinRequest.JoinRequestId, currentUser.uid);
+
+      addToast('Successfully joined the family tree!', 'success');
+      navigate(`/tree/${inviteData.invite.treeId}`);
+    } catch (error) {
+      console.error('Failed to process grant invite:', error);
+      addToast('Failed to join the family tree', 'error');
     }
   };
 

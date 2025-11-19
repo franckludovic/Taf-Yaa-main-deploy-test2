@@ -69,7 +69,7 @@ const JoinRequestPage = () => {
         setInviteData(result);
 
         
-        const peopleData = await dataService.getPeopleByTreeId(result.invite.treeId);
+        const peopleData = await dataService.getPeopleByTreeId(result.invite.treeId, true);
         const allMarriages = await dataService.getAllMarriages(result.invite.treeId);
 
        
@@ -90,6 +90,16 @@ const JoinRequestPage = () => {
         if (result.invite.type === 'nontargeted') {
           const directLine = getDirectLinePeople(peopleData || [], marriagesData || []);
           setDirectLinePeople(directLine);
+        } else if (result.invite.type === 'grant') {
+          // For grant invites, pre-fill parents and skip the form
+          setFormData(prev => ({
+            ...prev,
+            claimedFatherId: result.invite.fatherId,
+            claimedMotherId: result.invite.motherId,
+            name: currentUser?.displayName || currentUser?.email || '',
+            gender: 'male', // Default, can be updated later
+            notes: 'Auto-approved grant membership'
+          }));
         } else {
           // For targeted invites, pre-fill parents
           setFormData(prev => ({
@@ -193,6 +203,43 @@ const JoinRequestPage = () => {
   };
 
   const handleSubmit = async () => {
+    // Skip validation for grant invites - they are auto-approved
+    if (inviteData?.invite.type === 'grant') {
+      setSubmitting(true);
+      setError(null);
+
+      try {
+        // For grant invites, create and auto-approve the join request
+        const joinRequest = await submitJoinRequest({
+          treeId: inviteData.invite.treeId,
+          inviteCode: inviteData.invite.code,
+          inviteId: inviteData.inviteId,
+          submittedBy: currentUser.uid,
+          claimedFatherId: formData.claimedFatherId,
+          claimedMotherId: formData.claimedMotherId,
+          name: formData.name,
+          gender: formData.gender,
+          birthDate: formData.birthDate || null,
+          notes: formData.notes || null,
+          proofFiles: formData.proofFiles
+        });
+
+        // Auto-approve the join request
+        const { acceptJoinRequest } = await import('../services/joinRequestService');
+        await acceptJoinRequest(joinRequest.JoinRequestId, currentUser.uid);
+
+        addToast('Successfully joined the family tree!', 'success');
+        navigate(`/tree/${inviteData.invite.treeId}`);
+      } catch (err) {
+        console.error('Failed to process grant invite:', err);
+        setError(`Failed to join: ${err.message}`);
+        addToast('Failed to join the family tree', 'error');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     if (!formData.name.trim()) {
       setError('Name is required');
       return;
@@ -288,7 +335,10 @@ const JoinRequestPage = () => {
             <CheckCircle size={48} color="var(--color-success)" />
             <Text variant="heading1" textAlign="center">Complete Your Join Request</Text>
             <Text variant="body1" textAlign="center" color="gray">
-              Fill in your information and provide proof documents for admin approval.
+              {inviteData?.invite.type === 'grant'
+                ? 'You have been granted membership. Click below to join the family tree.'
+                : 'Fill in your information and provide proof documents for admin approval.'
+              }
             </Text>
           </FlexContainer>
 
@@ -309,36 +359,38 @@ const JoinRequestPage = () => {
           </Card>
 
           {/* Personal Information */}
-          <Card backgroundColor="var(--color-transparent)" borderColor="var(--color-gray-light)" padding="20px" boxShadow="0 2px 8px rgba(0,0,0,0.05)">
-            <Row align="center" gap="10px" margin="0px 0px 10px 0px" fitContent justifyContent="flex-start">
-              <User size={20} color="var(--color-primary)" />
-              <Text variant="body1" bold>Personal Information</Text>
-            </Row>
-            <Column gap="20px">
-              <Row gap="20px" padding="0px" margin="0px">
-                <TextInput
-                  label="Full Name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter your full name"
-                  required
-                />
-                <SelectDropdown
-                  label="Gender"
-                  options={genderOptions}
-                  value={formData.gender}
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                  placeholder="Select gender"
-                  required
-                />
+          {inviteData?.invite.type !== 'grant' && (
+            <Card backgroundColor="var(--color-transparent)" borderColor="var(--color-gray-light)" padding="20px" boxShadow="0 2px 8px rgba(0,0,0,0.05)">
+              <Row align="center" gap="10px" margin="0px 0px 10px 0px" fitContent justifyContent="flex-start">
+                <User size={20} color="var(--color-primary)" />
+                <Text variant="body1" bold>Personal Information</Text>
               </Row>
-              <DateInput
-                label="Birth Date (Optional)"
-                value={formData.birthDate}
-                onChange={(e) => handleInputChange('birthDate', e.target.value)}
-              />
-            </Column>
-          </Card>
+              <Column gap="20px">
+                <Row gap="20px" padding="0px" margin="0px">
+                  <TextInput
+                    label="Full Name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                  <SelectDropdown
+                    label="Gender"
+                    options={genderOptions}
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    placeholder="Select gender"
+                    required
+                  />
+                </Row>
+                <DateInput
+                  label="Birth Date (Optional)"
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                />
+              </Column>
+            </Card>
+          )}
 
           {/* Parent Selection for Non-Targeted Invites */}
           {inviteData?.invite.type === 'nontargeted' && (
@@ -392,116 +444,118 @@ const JoinRequestPage = () => {
           )}
 
           {/* Proof Documents */}
-          <Card backgroundColor="var(--color-transparent)" borderColor="var(--color-gray-light)" padding="20px">
-            <Row fitContent justifyContent="flex-start" align="center" gap="10px" margin="0px 0px 20px 0px">
-              <Upload size={20} color="var(--color-primary)" />
-              <Text variant="body1" bold>Proof Documents</Text>
-            </Row>
-            <Column gap="20px">
-              <MediaAttachment
-                onAttachmentAdded={(attachment) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    proofFiles: [...prev.proofFiles, {
-                      url: attachment.url,
-                      type: attachment.type,
-                      name: attachment.caption || attachment.attachmentId,
-                      size: attachment.size,
-                      attachmentId: attachment.attachmentId,
-                      cloudinaryId: attachment.cloudinaryId,
-                      format: attachment.format,
-                      duration: attachment.duration,
-                      width: attachment.width,
-                      height: attachment.height
-                    }]
-                  }));
-                }}
-              />
-              {formData.proofFiles.length > 0 && (
-                <Column gap="10px">
-                  <Text variant="body2" bold>Attached Files:</Text>
-                  <Row  gap="10px" padding="0px" margin="0px" wrap="wrap">
-                    {formData.proofFiles.map((file, index) => {
-                      if (file.type === 'image') {
-                        return (
-                          <ImageAttachmentCard
-                            key={index}
-                            src={file.url}
-                            alt={file.name}
-                            caption={file.name}
-                            uploader={currentUser?.uid}
-                            onClick={() => {}}
-                            onDelete={() => removeProofFile(index)}
-                            attachmentId={`proof-${index}`}
-                          />
-                        );
-                      } else if (file.type === 'video') {
-                        return (
-                          <VideoAttachmentCard
-                            key={index}
-                            src={file.url.replace(/\.[^/.]+$/, '.jpg')}
-                            alt={file.name}
-                            caption={file.name}
-                            duration={file.duration}
-                            uploader={currentUser?.uid}
-                            onClick={() => {}}
-                            onDelete={() => removeProofFile(index)}
-                            attachmentId={`proof-${index}`}
-                          />
-                        );
-                      } else if (file.type === 'audio') {
-                        return (
-                          <AudioAttachmentCard
-                            key={index}
-                            thumbnail={null}
-                            duration={file.duration}
-                            title={file.name}
-                            uploader={currentUser?.uid}
-                            onClick={() => {}}
-                            onDelete={() => removeProofFile(index)}
-                            attachmentId={`proof-${index}`}
-                          />
-                        );
-                      } else {
-                        // PDF or other file types
-                        return (
-                          <div key={index} className="relative w-[120px] h-[120px] rounded-xl overflow-hidden shadow-md group cursor-pointer bg-gray-100 flex flex-col items-center justify-center">
-                            <div className="absolute top-1 right-1 z-20">
-                              <Card
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeProofFile(index);
-                                }}
-                                style={{
-                                  padding: '3px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  borderRadius: '50%',
-                                  cursor: 'pointer',
-                                  border: '1px solid #e5e7eb'
-                                }}
-                              >
-                                <X size={12} color="#dc2626" />
-                              </Card>
-                            </div>
+          {inviteData?.invite.type !== 'grant' && (
+            <Card backgroundColor="var(--color-transparent)" borderColor="var(--color-gray-light)" padding="20px">
+              <Row fitContent justifyContent="flex-start" align="center" gap="10px" margin="0px 0px 20px 0px">
+                <Upload size={20} color="var(--color-primary)" />
+                <Text variant="body1" bold>Proof Documents</Text>
+              </Row>
+              <Column gap="20px">
+                <MediaAttachment
+                  onAttachmentAdded={(attachment) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      proofFiles: [...prev.proofFiles, {
+                        url: attachment.url,
+                        type: attachment.type,
+                        name: attachment.caption || attachment.attachmentId,
+                        size: attachment.size,
+                        attachmentId: attachment.attachmentId,
+                        cloudinaryId: attachment.cloudinaryId,
+                        format: attachment.format,
+                        duration: attachment.duration,
+                        width: attachment.width,
+                        height: attachment.height
+                      }]
+                    }));
+                  }}
+                />
+                {formData.proofFiles.length > 0 && (
+                  <Column gap="10px">
+                    <Text variant="body2" bold>Attached Files:</Text>
+                    <Row  gap="10px" padding="0px" margin="0px" wrap="wrap">
+                      {formData.proofFiles.map((file, index) => {
+                        if (file.type === 'image') {
+                          return (
+                            <ImageAttachmentCard
+                              key={index}
+                              src={file.url}
+                              alt={file.name}
+                              caption={file.name}
+                              uploader={currentUser?.uid}
+                              onClick={() => {}}
+                              onDelete={() => removeProofFile(index)}
+                              attachmentId={`proof-${index}`}
+                            />
+                          );
+                        } else if (file.type === 'video') {
+                          return (
+                            <VideoAttachmentCard
+                              key={index}
+                              src={file.url.replace(/\.[^/.]+$/, '.jpg')}
+                              alt={file.name}
+                              caption={file.name}
+                              duration={file.duration}
+                              uploader={currentUser?.uid}
+                              onClick={() => {}}
+                              onDelete={() => removeProofFile(index)}
+                              attachmentId={`proof-${index}`}
+                            />
+                          );
+                        } else if (file.type === 'audio') {
+                          return (
+                            <AudioAttachmentCard
+                              key={index}
+                              thumbnail={null}
+                              duration={file.duration}
+                              title={file.name}
+                              uploader={currentUser?.uid}
+                              onClick={() => {}}
+                              onDelete={() => removeProofFile(index)}
+                              attachmentId={`proof-${index}`}
+                            />
+                          );
+                        } else {
+                          // PDF or other file types
+                          return (
+                            <div key={index} className="relative w-[120px] h-[120px] rounded-xl overflow-hidden shadow-md group cursor-pointer bg-gray-100 flex flex-col items-center justify-center">
+                              <div className="absolute top-1 right-1 z-20">
+                                <Card
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeProofFile(index);
+                                  }}
+                                  style={{
+                                    padding: '3px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                    borderRadius: '50%',
+                                    cursor: 'pointer',
+                                    border: '1px solid #e5e7eb'
+                                  }}
+                                >
+                                  <X size={12} color="#dc2626" />
+                                </Card>
+                              </div>
 
-                            <div className="text-center">
-                              <FileText className="w-8 h-8 text-gray-400 mb-1" />
-                              <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[100px]">
-                                {file.name}
-                              </p>
-                              <p className="text-[9px] text-gray-500">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
+                              <div className="text-center">
+                                <FileText className="w-8 h-8 text-gray-400 mb-1" />
+                                <p className="text-[10px] font-semibold text-gray-600 truncate max-w-[100px]">
+                                  {file.name}
+                                </p>
+                                <p className="text-[9px] text-gray-500">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }
-                    })}
-                  </Row>
-                </Column>
-              )}
-            </Column>
-          </Card>
+                          );
+                        }
+                      })}
+                    </Row>
+                  </Column>
+                )}
+              </Column>
+            </Card>
+          )}
 
           {/* Additional Notes */}
           <Card backgroundColor="var(--color-transparent)" borderColor="var(--color-gray-light)" padding="20px">
@@ -538,7 +592,7 @@ const JoinRequestPage = () => {
               disabled={submitting}
               fullWidth
             >
-              {submitting ? 'Submitting...' : 'Submit Join Request'}
+              {submitting ? 'Processing...' : (inviteData?.invite.type === 'grant' ? 'Join Family Tree' : 'Submit Join Request')}
             </Button>
           </Row>
         </Column>

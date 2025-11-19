@@ -13,14 +13,59 @@ import {
   serverTimestamp,
   deleteField
 } from 'firebase/firestore';
-import { db } from '../../config/firebase.js';
+import { db, auth } from '../../config/firebase.js';
 import { generateId } from '../../utils/personUtils/idGenerator.js';
+import dataService from '../dataService.js';
+import { canUserAccessContent } from '../../utils/lineageUtils.js';
+import { checkPermission, ACTIONS, getPermissionErrorMessage } from '../../utils/permissions.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
 
 async function addEvent(event) {
   try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for adding event
+    if (event.treeId && event.personIds && event.personIds.length > 0) {
+      const tree = await dataService.getTree(event.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        // Check access for each person in the event
+        for (const personId of event.personIds) {
+          const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, personId, event.treeId, 'add', currentUser.uid);
+          if (!hasAccess) {
+            // For editors, mark event as pending review instead of blocking
+            if (memberData.role === 'editor') {
+              event.pendingReview = true;
+              event.reviewReason = 'Event added for person(s) outside editor\'s lineage';
+              break; // Mark as pending and stop checking further
+            } else {
+              throw new Error(`User ${currentUser.uid} does not have permission to add events for person ${personId}`);
+            }
+          }
+        }
+      }
+    }
+
+    // Log activity for event creation
+    if (currentUser && event.treeId) {
+      const tree = await dataService.getTree(event.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          event.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          event.pendingReview ? 'event_pending_review' : 'event_added',
+          { eventTitle: event.title || 'Untitled Event', eventId: event.id }
+        );
+      }
+    }
+
     const eventRef = doc(db, 'events', event.id);
     const eventData = {
       ...event,
@@ -54,13 +99,55 @@ async function getEvent(eventId) {
 async function updateEvent(eventId, updatedData) {
   try {
     const eventRef = doc(db, 'events', eventId);
+
+    // Get current event to access createdBy and existing data
+    const currentEvent = await getEvent(eventId);
+    if (!currentEvent) {
+      throw new Error("Event not found");
+    }
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for updating event
+    if (currentEvent.treeId && currentEvent.personIds && currentEvent.personIds.length > 0) {
+      const tree = await dataService.getTree(currentEvent.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        // Check access for each person in the event
+        for (const personId of currentEvent.personIds) {
+          const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, personId, currentEvent.treeId, 'edit', currentEvent.createdBy);
+          if (!hasAccess) {
+            throw new Error(`User ${currentUser.uid} does not have permission to edit this event`);
+          }
+        }
+      }
+    }
+
+    // Log activity for event update
+    if (currentUser && currentEvent.treeId) {
+      const tree = await dataService.getTree(currentEvent.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          currentEvent.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'event_edited',
+          { eventTitle: currentEvent.title || 'Untitled Event', eventId: eventId }
+        );
+      }
+    }
+
     const updateData = {
       ...updatedData,
       updatedAt: getCurrentTimestamp()
     };
 
     await updateDoc(eventRef, updateData);
-    
+
     // Return updated event
     return await getEvent(eventId);
   } catch (error) {
@@ -75,9 +162,44 @@ async function deleteEvent(eventId) {
       throw new Error("Event not found");
     }
 
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check user permissions for deleting event
+    if (event.treeId && event.personIds && event.personIds.length > 0) {
+      const tree = await dataService.getTree(event.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        // Check access for each person in the event
+        for (const personId of event.personIds) {
+          const hasAccess = await canUserAccessContent(currentUser.uid, memberData.role, personId, event.treeId, 'delete', event.createdBy);
+          if (!hasAccess) {
+            throw new Error(`User ${currentUser.uid} does not have permission to delete this event`);
+          }
+        }
+      }
+    }
+
+    // Log activity for event deletion
+    if (currentUser && event.treeId) {
+      const tree = await dataService.getTree(event.treeId);
+      const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
+      if (memberData) {
+        await dataService.activityService.logActivity(
+          event.treeId,
+          currentUser.uid,
+          memberData.displayName || currentUser.email || 'Unknown User',
+          'event_deleted',
+          { eventTitle: event.title || 'Untitled Event', eventId: eventId }
+        );
+      }
+    }
+
     // Permanently delete the event
     await deleteDoc(doc(db, 'events', eventId));
-    
+
     console.log(`DBG:eventServiceFirebase.deleteEvent -> permanently removed ${eventId}`);
     return event;
   } catch (error) {

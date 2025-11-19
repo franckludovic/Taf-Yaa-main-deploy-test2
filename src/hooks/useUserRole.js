@@ -31,18 +31,24 @@ export const useUserRole = (treeId) => {
         // Check if user is a member and get their role
         let role = null;
 
-        // First check the members array (new structure)
-        if (treeData.members && Array.isArray(treeData.members)) {
-          const member = treeData.members.find(m => m.userId === currentUser.uid);
-          if (member) {
-            role = member.role;
+        // If user is the creator, they are admin
+        if (treeData.creatorId && treeData.creatorId === currentUser.uid) {
+          role = 'admin';
+        } else {
+          // First check the members array (new structure)
+          if (treeData.members && Array.isArray(treeData.members)) {
+            const member = treeData.members.find(m => m.userId === currentUser.uid);
+            if (member) {
+              role = member.role;
+            }
+          }
+
+          // Fallback to roles object (old structure)
+          if (!role && treeData.roles) {
+            role = treeData.roles[currentUser.uid];
           }
         }
 
-        // Fallback to roles object (old structure)
-        if (!role && treeData.roles) {
-          role = treeData.roles[currentUser.uid];
-        }
 
         setUserRole(role);
         setIsAdmin(role === 'admin' || role === 'moderator');

@@ -40,6 +40,7 @@ import useSidebarStore from "../../store/useSidebarStore";
 import useModalStore from "../../store/useModalStore";
 import dataService from "../../services/dataService";
 import { toPng } from 'html-to-image';
+import { usePermissions } from "../../hooks/usePermissions";
 
 // -- React Flow `config --
 const nodeTypes = {
@@ -96,6 +97,7 @@ function TreeCanvasComponent({ treeId, _lottieData }) {
     useFamilyData(treeId);
 
   const [treeData, setTreeData] = useState(null);
+  const { permissions, loading: permissionsLoading } = usePermissions(treeId);
 
   const { fitView } = useReactFlow();
   const { closeMenu } = usePersonMenuStore((state) => state.actions);
@@ -329,22 +331,30 @@ useEffect(() => {
         handleTraceLineage={handleTraceLineage}
         handleSetAsRoot={handleSetAsRoot}
         onAddSpouse={(personId) => {
-          setTargetNodeId(personId);
-          const person = allPeople.find((p) => p.id === personId);
-          if (person) setPartnerName(person.name);
-          openModal("addSpouseModal", { targetNodeId: personId, treeId, partnerName: person?.name, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          if (permissions.canCreatePerson?.allowed) {
+            setTargetNodeId(personId);
+            const person = allPeople.find((p) => p.id === personId);
+            if (person) setPartnerName(person.name);
+            openModal("addSpouseModal", { targetNodeId: personId, treeId, partnerName: person?.name, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          }
         }}
         onAddChild={(personId) => {
-          setTargetNodeId(personId);
-          openModal("addChildModal", { targetNodeId: personId, treeId, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          if (permissions.canCreatePerson?.allowed) {
+            setTargetNodeId(personId);
+            openModal("addChildModal", { targetNodeId: personId, treeId, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          }
         }}
         onAddParent={(personId) => {
-          setTargetNodeId(personId);
-          openModal("addParentModal", { targetNodeId: personId, treeId, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          if (permissions.canCreatePerson?.allowed) {
+            setTargetNodeId(personId);
+            openModal("addParentModal", { targetNodeId: personId, treeId, onSuccess: () => { reload(); setTargetNodeId(null); } });
+          }
         }}
         onEditPerson={(personId) => {
-          setTargetNodeId(personId);
-          openModal("editPerson", { personId });
+          if (permissions.canEditPerson?.allowed) {
+            setTargetNodeId(personId);
+            openModal("editPerson", { personId });
+          }
         }}
         onDeleteComplete={() => reload()}
       />

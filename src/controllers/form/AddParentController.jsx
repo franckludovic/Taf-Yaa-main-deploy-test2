@@ -7,6 +7,8 @@ import useToastStore from "../../store/useToastStore.js";
 import useModalStore from "../../store/useModalStore.js";
 import LottieLoader from "../../components/LottieLoader.jsx";
 import { auth } from "../../config/firebase.js";
+import { checkPermission, getPermissionErrorMessage, ACTIONS } from "../../utils/permissions.js";
+import { useUserRole } from "../../hooks/useUserRole.js";
 
 const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,7 +20,8 @@ const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
   });
 
   const addToast = useToastStore((state) => state.addToast);
-  const { openModal, closeModal } = useModalStore(); 
+  const { openModal, closeModal } = useModalStore();
+  const { userRole } = useUserRole(treeId);
 
   useEffect(() => {
     async function prepareForm() {
@@ -83,6 +86,22 @@ const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
     setIsSubmitting(true);
     setError(null);
     try {
+      // Check permission before proceeding
+      const permissionResult = await checkPermission(
+        auth.currentUser?.uid || "anonymous",
+        userRole,
+        ACTIONS.CREATE_PERSON,
+        childId,
+        treeId
+      );
+
+      if (!permissionResult.allowed) {
+        const errorMessage = getPermissionErrorMessage(permissionResult);
+        setError(errorMessage);
+        addToast(errorMessage, "error");
+        return;
+      }
+
       const options = {
         parentToMarryId: parentData.parentToMarryId || null,
         createdBy: auth.currentUser?.uid || "anonymous",
@@ -92,7 +111,7 @@ const AddParentController = ({ treeId, childId, onSuccess, onCancel }) => {
       };
 
       const result = await addParentToChild(treeId, childId, parentData, options);
-      
+
       addToast("Parent added successfully!", "success");
       if (onSuccess) onSuccess(result);
 
