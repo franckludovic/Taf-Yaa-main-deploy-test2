@@ -35,3 +35,17 @@ export async function validateMarriageData(marriageData, existingSpouse, newSpou
 
   /* Add more marriage validations later (considering age difference) */
 }
+
+export function validateMarriageDateVsBirth(marriageDate, existingSpouse, newSpouseInfo) {
+  const marriageDateObj = new Date(marriageDate);
+  const existingBirthDate = existingSpouse.dob ? new Date(existingSpouse.dob) : null;
+  const newBirthDate = newSpouseInfo.dob ? new Date(newSpouseInfo.dob) : null;
+
+  if (existingBirthDate && marriageDateObj <= existingBirthDate) {
+    throw new Error(`${existingSpouse.name} cannot marry before they are born.`);
+  }
+
+  if (newBirthDate && marriageDateObj <= newBirthDate) {
+    throw new Error(`${newSpouseInfo.name} cannot marry before they are born.`);
+  }
+}

@@ -89,9 +89,7 @@ const ActivityCard = ({
       case ACTIVITY_TYPES.ROLE_CHANGED:
         return `${userName} changed ${details.targetUserName}'s role from ${details.oldRole} to ${details.newRole}`;
       case ACTIVITY_TYPES.TREE_SETTINGS_EDITED:
-        return `${userName} updated tree settings: ${details.changedFields.join(
-          ", "
-        )}`;
+        return `${userName} updated tree settings`;
       default:
         return `${userName} performed an action: ${activityType}`;
     }
@@ -210,82 +208,57 @@ const ActivityCard = ({
         positionType="absolute"
         position="bottom-left"
       >
-        {activity.activityType === ACTIVITY_TYPES.PERSON_EDITED &&
-          activity.details.changedFields && (
-            <Row
-              justifyContent="start"
-              fitContent
-              padding="0px"
-              margin="0px"
-              gap="0.25rem"
-            >
-              <Text variant="caption2" color="secondary-text">
-                Changed:{" "}
-              </Text>
-              <div
-                style={{
-                  maxWidth: "200px",
-                  overflowX: "auto",
-                  display: "flex",
-                  gap: "0.25rem",
-                  flexWrap: "nowrap",
-                }}
-              >
-                {activity.details.changedFields.map((change, _index) => (
-                  <Tooltip
-                    key={_index}
-                    content={
-                      change.field === 'unknown fields'
-                        ? 'Unknown fields were changed'
-                        : `changed from ${change.oldValue || 'null'} to ${change.newValue || 'null'}`
-                    }
-                  >
-                    <span
-                      style={{
-                        backgroundColor: "var(--color-gray-light)",
-                        padding: "0.125rem 0.375rem",
-                        borderRadius: "4px",
-                        fontSize: "0.75rem",
-                        color: "var(--color-secondary-text)",
-                        whiteSpace: "nowrap",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {change.field}
-                      {_index < activity.details.changedFields.length - 1
-                        ? ","
-                        : ""}
-                    </span>
-                  </Tooltip>
-                ))}
-              </div>
-            </Row>
-          )}
-      </Card>
-
-      {activity.activityType === ACTIVITY_TYPES.TREE_SETTINGS_EDITED &&
-        activity.details.changedFields && (
-          <Row padding="0.5rem 0 0 1rem" gap="0.25rem" wrap>
+        {activity.details.changedFields && (
+          <Row
+            justifyContent="start"
+            fitContent
+            padding="0px"
+            margin="0px"
+            gap="0.25rem"
+          >
             <Text variant="caption2" color="secondary-text">
-              Settings:{" "}
+              Changed:{" "}
             </Text>
-            {activity.details.changedFields.map((field, index) => (
-              <span
-                key={field}
-                style={{
-                  backgroundColor: "var(--color-secondary-light)",
-                  padding: "0.125rem 0.375rem",
-                  borderRadius: "4px",
-                  fontSize: "0.75rem",
-                  color: "var(--color-secondary)",
-                }}
-              >
-                {field}
-                {index < activity.details.changedFields.length - 1 ? "," : ""}
-              </span>
-            ))}
+            <div
+              style={{
+                maxWidth: "200px",
+                overflowX: "auto",
+                display: "flex",
+                gap: "0.25rem",
+                flexWrap: "nowrap",
+              }}
+            >
+              {activity.details.changedFields.map((change, _index) => (
+                <Tooltip
+                  key={_index}
+                  content={
+                    change.field === 'unknown fields'
+                      ? 'Unknown fields were changed'
+                      : `changed from ${change.oldValue || 'null'} to ${change.newValue || 'null'}`
+                  }
+                >
+                  <span
+                    style={{
+                      backgroundColor: "var(--color-gray-light)",
+                      padding: "0.125rem 0.375rem",
+                      borderRadius: "4px",
+                      fontSize: "0.75rem",
+                      color: "var(--color-secondary-text)",
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {change.field}
+                    {_index < activity.details.changedFields.length - 1
+                      ? ","
+                      : ""}
+                  </span>
+                </Tooltip>
+              ))}
+            </div>
           </Row>
         )}
+      </Card>
     </Card>
   );
 };

@@ -21,7 +21,6 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
     if (isSubmitting || hasSubmitted.current) return;
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       let result;
@@ -41,7 +40,6 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
 
         if (!permissionResult.allowed) {
           const errorMessage = getPermissionErrorMessage(permissionResult);
-          setError(errorMessage);
           addToast(errorMessage, "error");
           return;
         }
@@ -60,13 +58,12 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
       }
 
       if (!result && !hasSubmitted.current) {
-        setError("Operation could not be completed. Please check inputs.");
+        addToast("Operation could not be completed. Please check inputs.", "error");
         setIsSubmitting(false);
         closeModal("treeModal");
       }
     } catch (err) {
       if (!hasSubmitted.current) {
-        setError(err.message || "Failed to create tree");
         addToast(err.message || "Unexpected error", "error");
       }
       console.error("TreeCreationController.handleSubmit:", err);
@@ -79,7 +76,6 @@ const TreeCreationController = ({ onSuccess, onCancel, createdBy, isEdit = false
 
   return (
     <>
-      {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
       {isSubmitting ? (
         <div style={{
           position: 'absolute',

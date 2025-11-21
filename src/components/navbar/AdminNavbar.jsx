@@ -97,26 +97,18 @@ export default function AdminNavbar() {
       label: t('navbar.profile'),
       icon: User,
       href: '/profile',
-      action: () => {
-        closeSubmenu();
-      }
+      action: () => navigate('/profile'), // <-- Ensure this navigates to UserProfile
     },
     {
       label: 'My Trees',
       icon: TreePine,
       href: '/my-trees',
-      action: () => {
-        closeSubmenu();
-        navigate('/my-trees');
-      }
+      action: () => navigate('/my-trees'),
     },
     {
       label: t('navbar.log_out'),
       icon: LogOut,
-      action: () => {
-        closeSubmenu();
-        handleLogout();
-      }
+      action: () => handleLogout(),
     }
   ];
 

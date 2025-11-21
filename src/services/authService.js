@@ -30,7 +30,6 @@ export const authService = {
         email: user.email,
         displayName: displayName,
         profilePhoto: null,
-        joinedTrees: [],
         preferences: {
           language: preferences.language || 'en',
           darkMode: preferences.darkMode ?? false,
@@ -119,7 +118,6 @@ export const authService = {
           email: user.email,
           displayName: user.displayName || 'Unknown',
           profilePhoto: user.photoURL || null,
-          joinedTrees: [],
           preferences: {
             language: 'en',
             darkMode: false,

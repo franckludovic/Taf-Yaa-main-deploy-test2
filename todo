@@ -1,11 +1,27 @@
-0000000000000000000000000000000000000000000000000000000--add margin on loginscreen(it take the full width of the screen no good for UI) ✓
---reduce the font size for mobile(fontsize resposivelness) ✓
---recude buttons for mobile(too big for mobile) ✓
---reduce drop down for mobile(too large not resposive enough) ✓
---arrange the tree canvas display(reduce legend size, map up by 10px, controls up by 10px) ✓
---arrange mobile nav bar (items to big, and export nav item indented,) just make sure all the items in the desctop verison of the nav bar is in the mobile version pleaese like the user drop down or others
---arranche scroll behavior on managemembers tree (table to big, header to big, controls to large)
---arrange language nav item on the mobile nav bar (nom it gives 404 page instead open the language modal)
---arrange notification center on mobile view
---make the my stories page responsive
---make the setting page responsive
+# TODO: Change Form Errors to Toast Messages
+
+## Files to Update
+
+### 1. JoinRequestPage.jsx
+- [ ] Remove error state and setError calls for validation
+- [ ] Replace setError with addToast for validation errors
+- [ ] Remove error display component
+
+### 2. InviteModal.jsx
+- [ ] Remove error state and setError calls for validation
+- [ ] Replace setError with addToast for validation errors
+- [ ] Remove error display component
+
+### 3. Controllers
+- [ ] TreeCreationController.jsx: Replace setError with addToast for validation
+- [ ] EditPersonController.jsx: Replace setError with addToast for validation
+- [ ] AddSpouseController.jsx: Replace setError with addToast for validation
+- [ ] AddParentController.jsx: Replace setError with addToast for validation
+- [ ] AddChildController.jsx: Replace setError with addToast for validation
+
+### 4. Other Forms (if needed)
+- [ ] Check and update any other forms that use setError for validation
+
+## Testing
+- [ ] Test each form to ensure errors show as toasts
+- [ ] Verify no inline error messages remain

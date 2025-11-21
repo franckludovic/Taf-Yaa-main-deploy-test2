@@ -35,6 +35,7 @@ const JoinRequestPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+
   const [formData, setFormData] = useState({
     name: '',
     gender: '',
@@ -55,7 +56,7 @@ const JoinRequestPage = () => {
         const code = searchParams.get('code');
 
         if (!inviteId || !code) {
-          setError('Invalid invitation parameters');
+          addToast('Invalid invitation parameters', 'error');
           setLoading(false);
           return;
         }
@@ -111,7 +112,6 @@ const JoinRequestPage = () => {
 
       } catch (err) {
         console.error('Failed to load data:', err);
-        setError(err.message);
         addToast('Failed to load invitation data', 'error');
       } finally {
         setLoading(false);
@@ -206,7 +206,6 @@ const JoinRequestPage = () => {
     // Skip validation for grant invites - they are auto-approved
     if (inviteData?.invite.type === 'grant') {
       setSubmitting(true);
-      setError(null);
 
       try {
         // For grant invites, create and auto-approve the join request
@@ -232,7 +231,6 @@ const JoinRequestPage = () => {
         navigate(`/tree/${inviteData.invite.treeId}`);
       } catch (err) {
         console.error('Failed to process grant invite:', err);
-        setError(`Failed to join: ${err.message}`);
         addToast('Failed to join the family tree', 'error');
       } finally {
         setSubmitting(false);
@@ -241,18 +239,18 @@ const JoinRequestPage = () => {
     }
 
     if (!formData.name.trim()) {
-      setError('Name is required');
+      addToast('Name is required', 'error');
       return;
     }
 
     if (!formData.gender) {
-      setError('Gender is required');
+      addToast('Gender is required', 'error');
       return;
     }
 
     if (inviteData?.invite.type === 'nontargeted') {
       if (!formData.selectedParentId) {
-        setError('Please select a parent from the direct line');
+        addToast('Please select a parent from the direct line', 'error');
         return;
       }
       // Allow single parent if no spouse available
@@ -263,12 +261,11 @@ const JoinRequestPage = () => {
     }
 
     if (formData.proofFiles.length === 0) {
-      setError('At least one proof document is required');
+      addToast('At least one proof document is required', 'error');
       return;
     }
 
     setSubmitting(true);
-    setError(null);
 
     try {
       await submitJoinRequest({
@@ -290,7 +287,6 @@ const JoinRequestPage = () => {
 
     } catch (err) {
       console.error('Failed to submit join request:', err);
-      setError(`Failed to submit request: ${err.message}`);
       addToast('Failed to submit join request', 'error');
     } finally {
       setSubmitting(false);
@@ -571,11 +567,7 @@ const JoinRequestPage = () => {
             />
           </Card>
 
-          {error && (
-            <Text variant="body2" color="error" textAlign="center">
-              {error}
-            </Text>
-          )}
+
 
           <Row  gap="20px" margin="20px 0px 0px 0px">
             <Button

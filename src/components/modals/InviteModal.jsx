@@ -34,7 +34,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
   const [directLinePeople, setDirectLinePeople] = useState([]);
   const [spouseOptions, setSpouseOptions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+
   const addToast = useToastStore(state => state.addToast);
 
   // Load people and marriages for parent selection
@@ -94,7 +94,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
           notes: ''
         });
       }
-      setError(null);
+
     }
   }, [isOpen, invite]);
 
@@ -170,24 +170,23 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
 
   const handleSubmit = async () => {
     if (!formData.role) {
-      setError('Role is required');
+      addToast('Role is required', 'error');
       return;
     }
 
     if (inviteType === 'targeted') {
       if (!formData.selectedParentId) {
-        setError('Please select a parent from the direct line');
+        addToast('Please select a parent from the direct line', 'error');
         return;
       }
       // Allow single parent if no spouse available
       if (!formData.fatherId && !formData.motherId) {
-        setError('At least one parent must be selected');
+        addToast('At least one parent must be selected', 'error');
         return;
       }
     }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const inviteData = {
@@ -352,11 +351,7 @@ const InviteModal = ({ isOpen, onClose, treeId, inviteType, onInviteCreated, onN
             />
           </Card>
 
-          {error && (
-            <Text variant='body2' color='error' style={{ textAlign: 'center' }}>
-              {error}
-            </Text>
-          )}
+
 
           <Row margin='10px 0px 0px 0px' padding='10px 0px 0px 0px'>
             <Button fullWidth variant="secondary" onClick={onClose} disabled={isSubmitting}>

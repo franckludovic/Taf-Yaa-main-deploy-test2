@@ -19,6 +19,7 @@ import FamilyActivityPage from "./pages/FamilyActivityPage.jsx";
 import MyTreesPage from "./pages/MyTreesPage.jsx";
 import MyStoriesPage from "./pages/MyStoriesPage.jsx";
 import MembersPage from "./pages/MembersPage.jsx";
+import ViewerMembersPage from "./pages/ViewerMembersPage.jsx";
 import InvitesPage from "./pages/InvitesPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
@@ -31,6 +32,7 @@ import EmailVerificationPage from "./pages/EmailVerificationPage.jsx";
 import SearchTreesPage from "./pages/SearchTreesPage.jsx";
 import PublicTreePage from "./pages/PublicTreePage.jsx";
 import Loading from "./components/Loading.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 
 // Component to handle landing page routing
@@ -177,6 +179,11 @@ const router = createBrowserRouter([
   {
     path: "/my-trees",
     element: <MyTreesPage />,
+    errorElement: <Custom404Page />,
+  },
+   {
+    path: "/profile",
+    element: <UserProfile />, 
     errorElement: <Custom404Page />,
   },
   {

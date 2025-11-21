@@ -92,6 +92,13 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
     throw new Error('This invitation has been revoked and cannot be used to accept join requests');
   }
 
+  // Increment the invite's uses count immediately after loading
+  const inviteUpdateData = {
+    uses: invite.uses + 1,
+    updatedAt: new Date().toISOString()
+  };
+  await updateDoc(inviteRef, inviteUpdateData);
+
   // Lazy imports for heavy modules
   const dataService = (await import('../services/dataService')).default;
   const { addChild } = await import('../controllers/tree/addChild');
@@ -164,6 +171,17 @@ export async function acceptJoinRequest(joinRequestId, reviewedBy) {
   await updateDoc(joinRequestRef, updateData);
 
   return { newPerson, updateData };
+}
+
+export async function getJoinRequestsByUserId(userId) {
+  const joinRequestsRef = collection(db, "joinRequests");
+  const q = query(joinRequestsRef, where("submittedBy", "==", userId));
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 }
 
 

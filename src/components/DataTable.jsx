@@ -10,6 +10,7 @@ import { SearchInput } from "./Input";
 const DataTable = ({
   columns,
   data,
+  onRowClick,
   customSortOptions = [],
   customFilterOptions = [],
   enableSearch = true,
@@ -27,10 +28,16 @@ const DataTable = ({
   const [controlsOpen, setControlsOpen] = useState(controlsInitiallyOpen);
   const [openFilter, setOpenFilter] = useState({});
   const [filterOrder, setFilterOrder] = useState([]);
+  const [selectedRow, setSelectedRow] = useState(null);
   console.log("DataTable State:", { searchQuery, searchColumn });
 
 
-  // 🔹 Generate default sort options from columns
+
+  const handleRowClick = (row) => {
+    if (onRowClick) onRowClick(row);
+    setSelectedRow(row.id); // store person ID
+  };
+
   const defaultSortOptions = useMemo(() => {
     return columns
       .filter((col) => col.sortable)
@@ -149,7 +156,6 @@ const DataTable = ({
         }
       }
     }
-
     // sorting
     if (sortKey) {
       const sortFn = sortOptions.find((opt) => opt.key === sortKey)?.fn;
@@ -297,7 +303,35 @@ const DataTable = ({
           )}
           <tbody>
             {pagedData.map((row, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'var(--color-white)' : 'var(--color-gray-lightest)', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.target.closest('tr').style.backgroundColor = 'var(--color-primary-lightest)'} onMouseLeave={(e) => e.target.closest('tr').style.backgroundColor = i % 2 === 0 ? 'var(--color-white)' : 'var(--color-gray-lightest)'}>
+              <tr
+                key={row.id}
+                onClick={() => handleRowClick(row)}
+                style={{
+                  backgroundColor:
+                    selectedRow === row.id
+                      ? "var(--color-success-light)"
+                      : i % 2 === 0
+                        ? "var(--color-white)"
+                        : "var(--color-gray-lightest)",
+                  transition: "background-color 0.2s",
+                  cursor: "pointer"
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedRow !== row.id) {
+                    e.currentTarget.style.backgroundColor = "var(--color-primary-lightest)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedRow !== row.id) {
+                    e.currentTarget.style.backgroundColor =
+                      i % 2 === 0
+                        ? "var(--color-white)"
+                        : "var(--color-gray-lightest)";
+                  }
+                }}
+              >
+
+
                 {columns.map((col) => (
                   <td key={col.key} style={{ padding: '12px 16px', textAlign: col.align || 'left', borderBottom: '1px solid var(--color-gray-light)' }}>
                     {col.render ? col.render(row) : row[col.key]}

@@ -24,6 +24,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [reviewerName, setReviewerName] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,6 +77,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
   const handleApproveConfirm = async () => {
     if (!notification.requestData) return;
 
+    setIsProcessing(true);
     try {
       // Check user permissions before approving
       const tree = await dataService.getTree(notification.requestData.treeId);
@@ -93,12 +95,15 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
     } catch (error) {
       console.error('Error approving request:', error);
       addToast('Failed to approve join request', 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleRejectConfirm = async () => {
     if (!notification.requestData) return;
 
+    setIsProcessing(true);
     try {
       await reviewJoinRequest(notification.requestData.JoinRequestId, 'rejected', currentUser.uid);
       addToast('Join request rejected', 'success');
@@ -107,6 +112,8 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
     } catch (error) {
       console.error('Error rejecting request:', error);
       addToast('Failed to reject join request', 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -260,7 +267,7 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
 
       {inviteType === 'grant' && request?.status === 'pending' && (
         <Card backgroundColor='var(--color-transparent)' padding='0px 2rem 0px 2rem' margin='0px'>
-          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick}>
+          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick} disabled={isProcessing}>
               Cancel Request
           </Button>
         </Card>
@@ -268,10 +275,10 @@ const JoinRequestDetails = ({ notification, onRefresh, onClose }) => {
 
       {request?.status === 'pending' && inviteType !== 'grant' && (
         <Row padding='0px' margin='0px' gap="8px">
-          <Button size='sm' fullWidth variant='primary' onClick={handleApproveClick}>
+          <Button size='sm' fullWidth variant='primary' onClick={handleApproveClick} disabled={isProcessing}>
             Accept Request
           </Button>
-          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick}>
+          <Button size='sm' fullWidth variant='danger' onClick={handleRejectClick} disabled={isProcessing}>
             Reject Request
           </Button>
         </Row>

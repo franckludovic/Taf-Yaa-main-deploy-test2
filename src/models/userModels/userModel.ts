@@ -8,8 +8,6 @@ export interface User {
   profilePhoto?: string | null;
   linkedPersonId?: string | null;
 
-  joinedTrees: string[];
-
   preferences: {
     language: string; // Consider ISO code
     darkMode: boolean;
@@ -36,7 +34,6 @@ export function createUser(input: Partial<User>): User {
     displayName: input.displayName || "Unknown",
     profilePhoto: input.profilePhoto || null,
     linkedPersonId: input.linkedPersonId || null,
-    joinedTrees: input.joinedTrees || [],
     preferences: {
       language: input.preferences?.language || "en",
       darkMode: input.preferences?.darkMode ?? false,

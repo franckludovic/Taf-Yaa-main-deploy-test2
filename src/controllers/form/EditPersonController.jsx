@@ -102,25 +102,66 @@ const EditPersonController = ({ personId, onSuccess, onCancel }) => {
         stories,
       } = updatedData;
 
-      const updates = {
-        name: fullName || '',
-        gender: gender || null,
-        dob: dateOfBirth || null,
-        isDeceased: !!isDeceased,
-        phoneNumber: phoneNumber || null,
-        email: email || null,
-        dod: dateOfDeath || null,
-        placeOfBirth: placeOfBirth || null,
-        placeOfDeath: placeOfDeath || null,
-        nationality: nationality || null,
-        countryOfResidence: countryOfResidence || null,
-        bio: biography || '',
-        tribe: tribe || null,
-        language: language || null,
-        privacyLevel: privacyLevel || 'membersOnly',
-        allowGlobalMatching: !!allowGlobalMatching,
-        isPlaceholder: false,
+      const original = formData.person;
+
+      // Helper function to normalize values for comparison
+      const normalizeValue = (value) => {
+        if (value === undefined || value === null || value === '') return null;
+        return value;
       };
+
+      const updates = {};
+
+      // Only include fields that have actually changed
+      if (normalizeValue(fullName) !== normalizeValue(original.name)) {
+        updates.name = fullName || '';
+      }
+      if (normalizeValue(gender) !== normalizeValue(original.gender)) {
+        updates.gender = gender || null;
+      }
+      if (normalizeValue(dateOfBirth) !== normalizeValue(original.dob)) {
+        updates.dob = dateOfBirth || null;
+      }
+      if (!!isDeceased !== !!original.isDeceased) {
+        updates.isDeceased = !!isDeceased;
+      }
+      if (normalizeValue(phoneNumber) !== normalizeValue(original.phoneNumber)) {
+        updates.phoneNumber = phoneNumber || null;
+      }
+      if (normalizeValue(email) !== normalizeValue(original.email)) {
+        updates.email = email || null;
+      }
+      if (normalizeValue(dateOfDeath) !== normalizeValue(original.dod)) {
+        updates.dod = dateOfDeath || null;
+      }
+      if (normalizeValue(placeOfBirth) !== normalizeValue(original.placeOfBirth)) {
+        updates.placeOfBirth = placeOfBirth || null;
+      }
+      if (normalizeValue(placeOfDeath) !== normalizeValue(original.placeOfDeath)) {
+        updates.placeOfDeath = placeOfDeath || null;
+      }
+      if (normalizeValue(nationality) !== normalizeValue(original.nationality)) {
+        updates.nationality = nationality || null;
+      }
+      if (normalizeValue(countryOfResidence) !== normalizeValue(original.countryOfResidence)) {
+        updates.countryOfResidence = countryOfResidence || null;
+      }
+      if (normalizeValue(biography) !== normalizeValue(original.bio)) {
+        updates.bio = biography || '';
+      }
+      if (normalizeValue(tribe) !== normalizeValue(original.tribe)) {
+        updates.tribe = tribe || null;
+      }
+      if (normalizeValue(language) !== normalizeValue(original.language)) {
+        updates.language = language || null;
+      }
+      if (normalizeValue(privacyLevel) !== normalizeValue(original.privacyLevel)) {
+        updates.privacyLevel = privacyLevel || 'membersOnly';
+      }
+      if (!!allowGlobalMatching !== !!original.allowGlobalMatching) {
+        updates.allowGlobalMatching = !!allowGlobalMatching;
+      }
+      updates.isPlaceholder = false; // Always set this
 
       // Upload profile photo if a File was provided
       if (profilePhoto instanceof File) {

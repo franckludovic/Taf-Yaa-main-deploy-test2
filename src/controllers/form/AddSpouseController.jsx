@@ -14,7 +14,7 @@ import { useUserRole } from "../../hooks/useUserRole.js";
 const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, onSaving }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+
   const [formProps, setFormProps] = useState(null);
 
   const addToast = useToastStore((state) => state.addToast);
@@ -43,11 +43,10 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
           suggestedWifeOrder: suggestedOrder,
         });
       } catch (err) {
-        setError("Failed to load data for the form.");
+        addToast("Failed to load data for the form.", "error");
         console.error("AddSpouseController.prepareForm:", err);
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
 
     loadData();
@@ -82,7 +81,7 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
     if (isSubmitting || hasSubmitted.current) return;
 
     setIsSubmitting(true);
-    setError(null);
+
 
     try {
       // Check permission before proceeding
@@ -96,7 +95,6 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
 
       if (!permissionResult.allowed) {
         const errorMessage = getPermissionErrorMessage(permissionResult);
-        setError(errorMessage);
         addToast(errorMessage, "error");
         return;
       }
@@ -121,12 +119,11 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
         closeModal("addSpouseModal");
       } else if (!result && !hasSubmitted.current) {
         setIsSubmitting(false);
-        setError("Operation could not be completed. Please check the rules.");
+        addToast("Operation could not be completed. Please check the rules.", "error");
         closeModal("addSpouseModal");
       }
     } catch (err) {
       if (!hasSubmitted.current) {
-        setError(err.message || "Failed to add spouse");
         addToast(err.message || "Unexpected error", "error");
       }
       console.error("AddSpouseController.handleSubmit:", err);
@@ -162,7 +159,6 @@ const AddSpouseController = ({ treeId, existingSpouseId, onSuccess, onCancel, on
 
   return (
     <div>
-      {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
       {isSubmitting ? (
         <div style={{
           position: 'absolute',

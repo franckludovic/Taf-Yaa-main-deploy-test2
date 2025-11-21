@@ -45,6 +45,7 @@ const PendingRequestDetailsModal = ({ isOpen, request, onClose, onRefresh }) => 
   }, [request]);
 
   const handleApprove = async () => {
+    setIsProcessing(true);
     try {
       await acceptJoinRequest(request.JoinRequestId, currentUser.uid);
       addToast('Join request approved successfully', 'success');
@@ -53,10 +54,13 @@ const PendingRequestDetailsModal = ({ isOpen, request, onClose, onRefresh }) => 
     } catch (error) {
       console.error('Error approving request:', error);
       addToast('Failed to approve join request', 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleReject = async () => {
+    setIsProcessing(true);
     try {
       await reviewJoinRequest(request.JoinRequestId, 'rejected', currentUser.uid);
       addToast('Join request rejected', 'success');
@@ -65,6 +69,8 @@ const PendingRequestDetailsModal = ({ isOpen, request, onClose, onRefresh }) => 
     } catch (error) {
       console.error('Error rejecting request:', error);
       addToast('Failed to reject join request', 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -223,14 +229,14 @@ const PendingRequestDetailsModal = ({ isOpen, request, onClose, onRefresh }) => 
 
       {/* Footer Area */}
       <Row padding='0px' margin='0px'>
-        <Button fullWidth variant='danger' onClick={handleReject} disabled={request.status !== 'pending'} >
+        <Button fullWidth variant='danger' onClick={handleReject} disabled={request.status !== 'pending' || isProcessing} >
           Reject Request
         </Button>
 
-        <Button fullWidth variant='primary' onClick={handleApprove} disabled={request.status !== 'pending'}>
+        <Button fullWidth variant='primary' onClick={handleApprove} disabled={request.status !== 'pending' || isProcessing}>
           Accept Request
         </Button>
-       
+
       </Row>
     </Modal>
   );

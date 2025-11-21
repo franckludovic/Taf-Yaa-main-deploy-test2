@@ -20,7 +20,6 @@ import { eventServiceFirebase } from './eventServiceFirebase.js';
 import { storyServiceFirebase } from './storyServiceFirebase.js';
 import dataService from '../dataService.js';
 import { canUserAccessPerson } from '../../utils/lineageUtils.js';
-import { checkPermission, ACTIONS, getPermissionErrorMessage } from '../../utils/permissions.js';
 
 // Helper function to get current timestamp
 const getCurrentTimestamp = () => serverTimestamp();
@@ -166,8 +165,18 @@ async function updatePerson(personId, updatedPersonData) {
       'tribe', 'language', 'biography', 'isDeceased', 'linkedUserId'
     ];
 
+    // Helper function to normalize values for comparison
+    const normalizeValue = (value) => {
+      if (value === undefined || value === null || value === '') return null;
+      return value;
+    };
+
     for (const field of fieldsToCheck) {
-      if (updateData[field] !== undefined && updateData[field] !== originalPerson[field]) {
+      const normalizedOld = normalizeValue(originalPerson[field]);
+      const normalizedNew = normalizeValue(updateData[field]);
+
+      // Only consider it changed if the field is in updateData and the normalized values differ
+      if (Object.prototype.hasOwnProperty.call(updateData, field) && normalizedOld !== normalizedNew) {
         changedFields.push({
           field,
           oldValue: originalPerson[field] || null,
@@ -180,13 +189,18 @@ async function updatePerson(personId, updatedPersonData) {
     if (changedFields.length === 0) {
       const updateFields = Object.keys(updateData).filter(key => key !== 'updatedAt');
       for (const field of updateFields) {
-        if (updateData[field] !== originalPerson[field]) {
-          changedFields.push({
-            field: 'unknown fields',
-            oldValue: null,
-            newValue: null
-          });
-          break; // Only add once
+        if (!fieldsToCheck.includes(field)) {
+          const normalizedOld = normalizeValue(originalPerson[field]);
+          const normalizedNew = normalizeValue(updateData[field]);
+
+          if (normalizedOld !== normalizedNew) {
+            changedFields.push({
+              field: 'unknown fields',
+              oldValue: null,
+              newValue: null
+            });
+            break; // Only add once
+          }
         }
       }
     }

@@ -116,13 +116,16 @@ async function updateTree(treeId, updates) {
       updatedAt: getCurrentTimestamp()
     };
 
-    // Log activity for tree settings changes
+    // Define public fields that can be displayed in notifications (non-disclosing)
+    const publicFields = ['name', 'description', 'invitesEnabled', 'mergeOptIn'];
+
+    // Log activity for tree settings changes (only for public fields)
     const currentUser = auth.currentUser;
     if (currentUser && Object.keys(updates).length > 0) {
       const tree = await getTree(treeId);
       const memberData = tree?.members?.find(m => m.userId === currentUser.uid);
       if (memberData) {
-        const changedFields = Object.keys(updates).filter(key => key !== 'updatedAt');
+        const changedFields = Object.keys(updates).filter(key => publicFields.includes(key) && key !== 'updatedAt');
         if (changedFields.length > 0) {
           await dataService.activityService.logActivity(
             treeId,
